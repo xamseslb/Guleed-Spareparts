@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orders – Guleed Spareparts</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      </div>
+      <div class="logo-text-wrap"><strong>Guleed</strong><span>Spareparts</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Inventory</div>
+      <a href="parts.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="7" height="9"/><rect x="15" y="3" width="7" height="5"/><rect x="15" y="12" width="7" height="9"/><rect x="2" y="16" width="7" height="5"/></svg>
+        Parts
+      </a>
+      <a href="orders.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Orders
+      </a>
+      <a href="customers.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Customers
+      </a>
+      <a href="loans.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+        Loans
+      </a>
+      <div class="nav-section-label" style="margin-top:8px;">Analytics</div>
+      <a href="index.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Dashboard
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <div class="user-info-wrap"><strong id="sidebar-username">…</strong><span id="sidebar-role"></span></div>
+      </div>
+      <button class="logout-btn" id="logout-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign out
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <h1 class="topbar-title">Orders</h1>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" id="add-order-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New order
+        </button>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <!-- Stats -->
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card"><div class="stat-label">Total Orders</div><div class="stat-value" id="stat-total">–</div></div>
+        <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value warn" id="stat-pending">–</div></div>
+        <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" id="stat-completed">–</div></div>
+        <div class="stat-card"><div class="stat-label">Cancelled</div><div class="stat-value danger" id="stat-cancelled">–</div></div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-bar">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="search" id="search-input" class="input-field" placeholder="Search by customer or part…">
+        </div>
+        <select id="status-filter" class="select-field">
+          <option value="">All statuses</option>
+          <option value="pending">Pending</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Part</th>
+              <th>Qty</th>
+              <th>Unit Price</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="orders-table-body">
+            <tr><td colspan="9" style="text-align:center;padding:48px;"><span class="spinner"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Order Modal -->
+<div class="modal-overlay" id="order-modal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">New Order</h2>
+      <button class="btn-icon" id="modal-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="order-form" novalidate>
+        <input type="hidden" id="order-id">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label" for="f-customer">Customer ID *</label>
+            <input id="f-customer" type="number" class="form-input" required placeholder="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-part">Part ID *</label>
+            <input id="f-part" type="number" class="form-input" required placeholder="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-quantity">Quantity *</label>
+            <input id="f-quantity" type="number" class="form-input" required min="1" value="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-status">Status</label>
+            <select id="f-status" class="form-select">
+              <option value="pending">Pending</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div class="form-group span2">
+            <label class="form-label" for="f-notes">Notes</label>
+            <textarea id="f-notes" class="form-textarea" placeholder="Optional notes…"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-save">Save order</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script type="module">
+import { api } from './js/api.js';
+
+const token = localStorage.getItem('gs_token');
+if (!token) window.location.href = 'login.html';
+
+const user = JSON.parse(localStorage.getItem('gs_user') || '{}');
+const fullName = user.full_name || 'Employee';
+document.getElementById('sidebar-username').textContent = fullName;
+document.getElementById('sidebar-role').textContent = user.role || '';
+document.getElementById('user-avatar').textContent = fullName.charAt(0).toUpperCase();
+document.getElementById('logout-btn').addEventListener('click', () => { localStorage.clear(); window.location.href = 'login.html'; });
+
+let allOrders = [];
+let editingId = null;
+
+// ── Toast ──────────────────────────────────────────────────────────────
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── Status badge ───────────────────────────────────────────────────────
+function statusBadge(s) {
+  const map = { pending: 'low', completed: 'ok', cancelled: 'empty' };
+  return `<span class="badge badge-${map[s] || 'ok'}">${s}</span>`;
+}
+
+// ── Load orders ────────────────────────────────────────────────────────
+async function loadOrders() {
+  try {
+    const orders = await api.getOrders() || [];
+    allOrders = orders;
+    applyFilters();
+    // Stats
+    document.getElementById('stat-total').textContent = orders.length;
+    document.getElementById('stat-pending').textContent = orders.filter(o => o.status === 'pending').length;
+    document.getElementById('stat-completed').textContent = orders.filter(o => o.status === 'completed').length;
+    document.getElementById('stat-cancelled').textContent = orders.filter(o => o.status === 'cancelled').length;
+  } catch (err) {
+    toast('Failed to load orders: ' + err.message, 'error');
+  }
+}
+
+function applyFilters() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const status = document.getElementById('status-filter').value;
+  const filtered = allOrders.filter(o => {
+    const matchQ = !q || String(o.id).includes(q) || (o.notes || '').toLowerCase().includes(q);
+    const matchS = !status || o.status === status;
+    return matchQ && matchS;
+  });
+  renderTable(filtered);
+}
+
+function renderTable(orders) {
+  const tbody = document.getElementById('orders-table-body');
+  if (!orders.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <h3>No orders found</h3><p>Create the first order using the button above.</p>
+    </div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = orders.map(o => `
+    <tr>
+      <td class="cell-part-number">#${o.id}</td>
+      <td style="color:var(--text-secondary);font-size:12px;">${o.customer_id}</td>
+      <td style="color:var(--text-secondary);font-size:12px;">${o.part_id}</td>
+      <td class="stock-num">${o.quantity}</td>
+      <td style="color:var(--text-secondary);">${o.unit_price ? o.unit_price.toLocaleString('no-NO') + ' kr' : '–'}</td>
+      <td><span class="stock-num">${o.total_price ? o.total_price.toLocaleString('no-NO') + ' kr' : '–'}</span></td>
+      <td>${statusBadge(o.status)}</td>
+      <td style="color:var(--text-muted);font-size:12px;">${o.order_date ? new Date(o.order_date).toLocaleDateString('en-GB') : '–'}</td>
+      <td>
+        <div class="cell-actions">
+          <button class="btn-icon" onclick="editOrder(${o.id})" title="Edit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="btn-icon danger" onclick="deleteOrder(${o.id})" title="Delete">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ── Modal ──────────────────────────────────────────────────────────────
+const modal = document.getElementById('order-modal');
+function openModal() { modal.classList.add('open'); }
+function closeModal() {
+  modal.classList.remove('open');
+  document.getElementById('order-form').reset();
+  document.getElementById('order-id').value = '';
+  document.getElementById('modal-title').textContent = 'New Order';
+  editingId = null;
+}
+
+document.getElementById('add-order-btn').addEventListener('click', openModal);
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-cancel').addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+document.getElementById('search-input').addEventListener('input', applyFilters);
+document.getElementById('status-filter').addEventListener('change', applyFilters);
+
+window.editOrder = async (id) => {
+  try {
+    const o = await api.getOrder(id);
+    editingId = id;
+    document.getElementById('order-id').value = id;
+    document.getElementById('modal-title').textContent = 'Edit Order';
+    document.getElementById('f-customer').value = o.customer_id;
+    document.getElementById('f-part').value = o.part_id;
+    document.getElementById('f-quantity').value = o.quantity;
+    document.getElementById('f-status').value = o.status;
+    document.getElementById('f-notes').value = o.notes || '';
+    openModal();
+  } catch (err) { toast(err.message, 'error'); }
+};
+
+window.deleteOrder = async (id) => {
+  if (!confirm('Delete this order?')) return;
+  try {
+    await api.deleteOrder(id);
+    toast('Order deleted', 'success');
+    loadOrders();
+  } catch (err) { toast(err.message, 'error'); }
+};
+
+document.getElementById('modal-save').addEventListener('click', async () => {
+  const id = document.getElementById('order-id').value;
+  const payload = {
+    customer_id: parseInt(document.getElementById('f-customer').value),
+    part_id: parseInt(document.getElementById('f-part').value),
+    quantity: parseInt(document.getElementById('f-quantity').value),
+    status: document.getElementById('f-status').value,
+    notes: document.getElementById('f-notes').value.trim() || null,
+  };
+  if (!payload.customer_id || !payload.part_id || !payload.quantity) {
+    toast('Please fill in required fields', 'error'); return;
+  }
+  try {
+    if (id) { await api.updateOrder(id, payload); toast('Order updated', 'success'); }
+    else     { await api.createOrder(payload);    toast('Order created', 'success'); }
+    loadOrders();
+    closeModal();
+  } catch (err) { toast(err.message, 'error'); }
+});
+
+loadOrders();
+</script>
+</body>
+</html>

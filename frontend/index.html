@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard – Guleed Spareparts</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+    .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-xs); }
+    .chart-card.span2 { grid-column: 1 / -1; }
+    .chart-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .chart-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+    .trend-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    .trend-up   { background: var(--green-light); color: var(--green); }
+    .trend-down { background: var(--red-light); color: var(--red); }
+    .trend-flat { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+    .low-stock-list { display: flex; flex-direction: column; gap: 8px; }
+    .low-stock-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .low-stock-item:last-child { border-bottom: none; }
+    .ls-name { font-size: 13px; font-weight: 500; }
+    .ls-num  { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+    .ls-right { display: flex; align-items: center; gap: 10px; }
+    .progress-bar { width: 80px; height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 99px; }
+    .cat-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .cat-table th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); text-align: left; padding: 0 0 8px; }
+    .cat-table td { padding: 8px 0; border-bottom: 1px solid #f2f3f5; }
+    .cat-table tr:last-child td { border-bottom: none; }
+    @media(max-width:900px) { .dashboard-grid { grid-template-columns: 1fr; } .chart-card.span2 { grid-column: 1; } }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      </div>
+      <div class="logo-text-wrap"><strong>Guleed</strong><span>Spareparts</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Inventory</div>
+      <a href="parts.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="7" height="9"/><rect x="15" y="3" width="7" height="5"/><rect x="15" y="12" width="7" height="9"/><rect x="2" y="16" width="7" height="5"/></svg>
+        Parts
+      </a>
+      <a href="orders.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Orders
+      </a>
+      <a href="customers.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Customers
+      </a>
+      <a href="loans.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+        Loans
+      </a>
+      <div class="nav-section-label" style="margin-top:8px;">Analytics</div>
+      <a href="index.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Dashboard
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <div class="user-info-wrap"><strong id="sidebar-username">…</strong><span id="sidebar-role"></span></div>
+      </div>
+      <button class="logout-btn" id="logout-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign out
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <h1 class="topbar-title">Dashboard</h1>
+    </header>
+
+    <div class="page-body">
+      <!-- KPI row -->
+      <div class="stats-grid" id="kpi-grid">
+        <div class="stat-card"><div class="stat-label">Total Parts</div><div class="stat-value" id="kpi-parts">–</div></div>
+        <div class="stat-card"><div class="stat-label">Low Stock</div><div class="stat-value warn" id="kpi-low">–</div></div>
+        <div class="stat-card"><div class="stat-label">Out of Stock</div><div class="stat-value danger" id="kpi-empty">–</div></div>
+        <div class="stat-card"><div class="stat-label">On Loan</div><div class="stat-value" id="kpi-loan">–</div></div>
+        <div class="stat-card"><div class="stat-label">Stock Value</div><div class="stat-value" id="kpi-value" style="font-size:17px;letter-spacing:-.3px;">–</div></div>
+      </div>
+
+      <div class="dashboard-grid">
+        <!-- Order trend chart -->
+        <div class="chart-card span2">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <div>
+              <div class="chart-title">Order Trend</div>
+              <div class="chart-sub">Daily order volume over time</div>
+            </div>
+            <div id="trend-badge"></div>
+          </div>
+          <canvas id="trend-chart" height="90"></canvas>
+        </div>
+
+        <!-- Category breakdown -->
+        <div class="chart-card">
+          <div class="chart-title">Category Breakdown</div>
+          <div class="chart-sub">Stock value by category</div>
+          <canvas id="cat-chart" height="200"></canvas>
+        </div>
+
+        <!-- Category table -->
+        <div class="chart-card">
+          <div class="chart-title">Category Stats</div>
+          <div class="chart-sub">Parts, value and low-stock count</div>
+          <div style="overflow-x:auto;">
+            <table class="cat-table">
+              <thead><tr><th>Category</th><th>Parts</th><th>Value (NOK)</th><th>Low</th></tr></thead>
+              <tbody id="cat-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Low stock list -->
+        <div class="chart-card span2">
+          <div class="chart-title">Low Stock Alert</div>
+          <div class="chart-sub">Parts at or below the reorder threshold</div>
+          <div class="low-stock-list" id="low-stock-list">
+            <div style="text-align:center;padding:20px;"><span class="spinner"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { api } from './js/api.js';
+
+const token = localStorage.getItem('gs_token');
+if (!token) window.location.href = 'login.html';
+
+const user = JSON.parse(localStorage.getItem('gs_user') || '{}');
+const fullName = user.full_name || 'Employee';
+document.getElementById('sidebar-username').textContent = fullName;
+document.getElementById('sidebar-role').textContent = user.role || '';
+document.getElementById('user-avatar').textContent = fullName.charAt(0).toUpperCase();
+document.getElementById('logout-btn').addEventListener('click', () => { localStorage.clear(); window.location.href = 'login.html'; });
+
+// Chart.js default style
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = '#9099ad';
+
+const BLUE  = '#2563eb';
+const BLUES = ['#2563eb','#3b82f6','#60a5fa','#93c5fd','#bfdbfe','#dbeafe'];
+
+async function loadAll() {
+  try {
+    const [summary, trend, cats, lowStock] = await Promise.all([
+      api.getSummary(),
+      api.getOrderTrend(),
+      api.getCategoryStats(),
+      api.getLowStock(),
+    ]);
+
+    // ── KPIs ────────────────────────────────────────────────────────
+    document.getElementById('kpi-parts').textContent = summary.total_parts ?? '–';
+    document.getElementById('kpi-low').textContent   = summary.lavt_lager ?? '–';
+    document.getElementById('kpi-empty').textContent = summary.tomt_for_vare ?? '–';
+    document.getElementById('kpi-loan').textContent  = summary['totalt_på_utlån'] ?? summary.totalt_pa_utlan ?? '–';
+    const val = summary.total_lagerverdi_nok;
+    document.getElementById('kpi-value').textContent = val
+      ? val.toLocaleString('no-NO', { style: 'currency', currency: 'NOK', maximumFractionDigits: 0 })
+      : '–';
+
+    // ── Trend chart ──────────────────────────────────────────────────
+    const trendLabel = trend.trend || 'No data';
+    const badgeClass = { Increasing: 'trend-up', Decreasing: 'trend-down', Stable: 'trend-flat' }[trendLabel] || 'trend-flat';
+    const badgeArrow = { Increasing: '↑', Decreasing: '↓', Stable: '→' }[trendLabel] || '';
+    document.getElementById('trend-badge').innerHTML =
+      `<span class="trend-badge ${badgeClass}">${badgeArrow} ${trendLabel}</span>`;
+
+    const daily = trend.daily_counts || [];
+    new Chart(document.getElementById('trend-chart'), {
+      type: 'line',
+      data: {
+        labels: daily.map(d => d.date),
+        datasets: [{
+          label: 'Orders',
+          data: daily.map(d => d.quantity),
+          borderColor: BLUE,
+          backgroundColor: 'rgba(37,99,235,.08)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 3,
+          pointBackgroundColor: BLUE,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } },
+          y: { beginAtZero: true, grid: { color: '#f2f3f5' } }
+        }
+      }
+    });
+
+    // ── Category doughnut ────────────────────────────────────────────
+    if (cats.length) {
+      new Chart(document.getElementById('cat-chart'), {
+        type: 'doughnut',
+        data: {
+          labels: cats.map(c => c.category),
+          datasets: [{
+            data: cats.map(c => c.total_stock_value),
+            backgroundColor: BLUES.slice(0, cats.length),
+            borderWidth: 0,
+          }]
+        },
+        options: {
+          responsive: true,
+          cutout: '65%',
+          plugins: {
+            legend: { position: 'right', labels: { usePointStyle: true, pointStyleWidth: 8, padding: 14 } },
+            tooltip: {
+              callbacks: {
+                label: ctx => ` ${ctx.parsed.toLocaleString('no-NO')} NOK`
+              }
+            }
+          }
+        }
+      });
+
+      // Category table
+      document.getElementById('cat-tbody').innerHTML = cats.map(c => `
+        <tr>
+          <td style="font-weight:500;">${c.category}</td>
+          <td style="color:var(--text-secondary);">${c.total_parts}</td>
+          <td style="color:var(--text-secondary);">${c.total_stock_value.toLocaleString('no-NO')} kr</td>
+          <td>${c.low_stock_count > 0 ? `<span class="badge badge-low">${c.low_stock_count}</span>` : '<span style="color:var(--text-muted);">–</span>'}</td>
+        </tr>
+      `).join('');
+    }
+
+    // ── Low stock list ───────────────────────────────────────────────
+    const list = document.getElementById('low-stock-list');
+    if (!lowStock.length) {
+      list.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:12px;font-size:13px;">All parts are above reorder levels.</p>';
+    } else {
+      list.innerHTML = lowStock.map(p => {
+        const pct = Math.min(100, Math.round(p.criticality_ratio * 100));
+        const color = p.status === 'Tomt' ? 'var(--red)' : 'var(--amber)';
+        return `
+          <div class="low-stock-item">
+            <div>
+              <div class="ls-name">${p.name}</div>
+              <div class="ls-num">${p.part_number} &middot; ${p.stock_quantity} / ${p.low_stock_threshold} threshold</div>
+            </div>
+            <div class="ls-right">
+              <div class="progress-bar">
+                <div class="progress-fill" style="width:${pct}%;background:${color};"></div>
+              </div>
+              <span class="badge badge-${p.status === 'Tomt' ? 'empty' : 'low'}">${p.status === 'Tomt' ? 'Empty' : 'Low'}</span>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+loadAll();
+</script>
+</body>
+</html>

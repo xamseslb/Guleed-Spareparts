@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loans – Guleed Spareparts</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Loan-specific overrides */
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; margin-right: 5px; }
+    .employee-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 999px; padding: 2px 9px;
+      font-size: 11px; font-weight: 500; color: var(--text-secondary);
+    }
+    .employee-chip svg { width: 11px; height: 11px; color: var(--text-muted); }
+    .date-cell { font-size: 12px; color: var(--text-secondary); }
+    .date-cell .overdue-flag { color: var(--red); font-weight: 600; display: block; font-size: 11px; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ─── Sidebar ───────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      </div>
+      <div class="logo-text-wrap"><strong>Guleed</strong><span>Spareparts</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Inventory</div>
+      <a href="parts.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="7" height="9"/><rect x="15" y="3" width="7" height="5"/><rect x="15" y="12" width="7" height="9"/><rect x="2" y="16" width="7" height="5"/></svg>
+        Parts
+      </a>
+      <a href="orders.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Orders
+      </a>
+      <a href="customers.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Customers
+      </a>
+      <a href="loans.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+        Loans
+      </a>
+      <div class="nav-section-label" style="margin-top:8px;">Analytics</div>
+      <a href="index.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Dashboard
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <div class="user-info-wrap"><strong id="sidebar-username">…</strong><span id="sidebar-role"></span></div>
+      </div>
+      <button class="logout-btn" id="logout-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign out
+      </button>
+    </div>
+  </aside>
+
+  <!-- ─── Main ──────────────────────────────────────────────────── -->
+  <div class="main-content">
+    <header class="topbar">
+      <h1 class="topbar-title">Loans</h1>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" id="add-loan-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Register loan
+        </button>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <!-- Stats -->
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card"><div class="stat-label">Active Loans</div><div class="stat-value" id="stat-active">–</div></div>
+        <div class="stat-card"><div class="stat-label">Overdue</div><div class="stat-value danger" id="stat-overdue">–</div></div>
+        <div class="stat-card"><div class="stat-label">Returned</div><div class="stat-value" id="stat-returned">–</div></div>
+        <div class="stat-card"><div class="stat-label">Total Value on Loan</div><div class="stat-value" id="stat-value" style="font-size:17px;letter-spacing:-.3px;">–</div></div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-bar">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="search" id="search-input" class="input-field" placeholder="Search by customer, part or employee…">
+        </div>
+        <select id="status-filter" class="select-field">
+          <option value="">All statuses</option>
+          <option value="active">Active</option>
+          <option value="overdue">Overdue</option>
+          <option value="returned">Returned</option>
+        </select>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <table class="data-table" aria-label="Loans">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Customer</th>
+              <th>Part</th>
+              <th>Qty</th>
+              <th>Price / unit</th>
+              <th>Total</th>
+              <th>Employee</th>
+              <th>Loan Date</th>
+              <th>Return By</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="loans-table-body">
+            <tr><td colspan="11" style="text-align:center;padding:48px;"><span class="spinner"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Register / Edit Loan Modal ──────────────────────────────── -->
+<div class="modal-overlay" id="loan-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">Register Loan</h2>
+      <button class="btn-icon" id="modal-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="loan-form" novalidate>
+        <input type="hidden" id="loan-id">
+        <div class="form-grid">
+
+          <!-- Customer select -->
+          <div class="form-group">
+            <label class="form-label" for="f-customer">Customer *</label>
+            <select id="f-customer" class="form-select" required>
+              <option value="">Select customer…</option>
+            </select>
+          </div>
+
+          <!-- Part select -->
+          <div class="form-group">
+            <label class="form-label" for="f-part">Part *</label>
+            <select id="f-part" class="form-select" required>
+              <option value="">Select part…</option>
+            </select>
+          </div>
+
+          <!-- Quantity -->
+          <div class="form-group">
+            <label class="form-label" for="f-quantity">Quantity *</label>
+            <input id="f-quantity" type="number" class="form-input" min="1" value="1" required>
+          </div>
+
+          <!-- Price per item -->
+          <div class="form-group">
+            <label class="form-label" for="f-price">Loan price per item (NOK)</label>
+            <input id="f-price" type="number" class="form-input" min="0" step="0.01" value="0" placeholder="0 = free loan">
+          </div>
+
+          <!-- Employee present -->
+          <div class="form-group span2">
+            <label class="form-label" for="f-employee">Employee present *</label>
+            <select id="f-employee" class="form-select" required>
+              <option value="">Select employee…</option>
+            </select>
+          </div>
+
+          <!-- Loan date -->
+          <div class="form-group">
+            <label class="form-label" for="f-loan-date">Loan date</label>
+            <input id="f-loan-date" type="datetime-local" class="form-input">
+          </div>
+
+          <!-- Expected return date -->
+          <div class="form-group">
+            <label class="form-label" for="f-return-date">Expected return date</label>
+            <input id="f-return-date" type="datetime-local" class="form-input">
+          </div>
+
+          <!-- Notes -->
+          <div class="form-group span2">
+            <label class="form-label" for="f-notes">Notes</label>
+            <textarea id="f-notes" class="form-textarea" placeholder="Any relevant info about this loan…"></textarea>
+          </div>
+
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-save">Save loan</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+<script type="module">
+import { api } from './js/api.js';
+
+// ── Auth ────────────────────────────────────────────────────────────
+const token = localStorage.getItem('gs_token');
+if (!token) window.location.href = 'login.html';
+const user = JSON.parse(localStorage.getItem('gs_user') || '{}');
+const fullName = user.full_name || 'Employee';
+document.getElementById('sidebar-username').textContent = fullName;
+document.getElementById('sidebar-role').textContent = user.role || '';
+document.getElementById('user-avatar').textContent = fullName.charAt(0).toUpperCase();
+document.getElementById('logout-btn').addEventListener('click', () => { localStorage.clear(); window.location.href = 'login.html'; });
+
+// ── State ────────────────────────────────────────────────────────────
+let allLoans = [];
+
+// ── Toast ────────────────────────────────────────────────────────────
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── Status badge ──────────────────────────────────────────────────────
+function statusBadge(s) {
+  const map = { active: 'ok', overdue: 'empty', returned: 'low' };
+  return `<span class="badge badge-${map[s] || 'ok'}">${s.charAt(0).toUpperCase() + s.slice(1)}</span>`;
+}
+
+// ── Format datetime ───────────────────────────────────────────────────
+function fmtDate(dt) {
+  if (!dt) return '–';
+  return new Date(dt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+// ── Load dropdown options (customers, parts, employees) ───────────────
+async function loadDropdowns() {
+  try {
+    const [customers, parts, employees] = await Promise.all([
+      api.getCustomers(),
+      api.getParts(),
+      api.getEmployees(),
+    ]);
+
+    const custSel = document.getElementById('f-customer');
+    customers.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.id; o.textContent = `${c.name}${c.phone ? ' – ' + c.phone : ''}`;
+      custSel.appendChild(o);
+    });
+
+    const partSel = document.getElementById('f-part');
+    parts.forEach(p => {
+      const avail = p.stock_quantity - p.loaned_quantity;
+      const o = document.createElement('option');
+      o.value = p.id;
+      o.textContent = `${p.part_number} – ${p.name} (${avail} available)`;
+      if (avail <= 0) o.disabled = true;
+      partSel.appendChild(o);
+    });
+
+    const empSel = document.getElementById('f-employee');
+    employees.forEach(e => {
+      const o = document.createElement('option');
+      o.value = e.full_name; o.textContent = `${e.full_name} (${e.role})`;
+      empSel.appendChild(o);
+    });
+  } catch (err) {
+    console.error('Error loading dropdowns:', err);
+  }
+}
+
+// ── Load and render loans ─────────────────────────────────────────────
+async function loadLoans() {
+  try {
+    allLoans = await api.getLoans() || [];
+    applyFilters();
+
+    const active   = allLoans.filter(l => l.status === 'active').length;
+    const overdue  = allLoans.filter(l => l.status === 'overdue').length;
+    const returned = allLoans.filter(l => l.status === 'returned').length;
+    const totalVal = allLoans
+      .filter(l => l.status !== 'returned')
+      .reduce((s, l) => s + (l.total_price || 0), 0);
+
+    document.getElementById('stat-active').textContent = active;
+    document.getElementById('stat-overdue').textContent = overdue;
+    document.getElementById('stat-returned').textContent = returned;
+    document.getElementById('stat-value').textContent =
+      totalVal.toLocaleString('no-NO', { style: 'currency', currency: 'NOK', maximumFractionDigits: 0 });
+  } catch (err) {
+    toast('Failed to load loans: ' + err.message, 'error');
+  }
+}
+
+function applyFilters() {
+  const q      = document.getElementById('search-input').value.toLowerCase();
+  const status = document.getElementById('status-filter').value;
+  const filtered = allLoans.filter(l => {
+    const matchQ = !q ||
+      (l.customer_name || '').toLowerCase().includes(q) ||
+      (l.part_name || '').toLowerCase().includes(q) ||
+      (l.part_number || '').toLowerCase().includes(q) ||
+      (l.employee_name || '').toLowerCase().includes(q);
+    const matchS = !status || l.status === status;
+    return matchQ && matchS;
+  });
+  renderTable(filtered);
+}
+
+function renderTable(loans) {
+  const tbody = document.getElementById('loans-table-body');
+  if (!loans.length) {
+    tbody.innerHTML = `<tr><td colspan="11">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+        <h3>No loans found</h3>
+        <p>Register a new loan using the button above.</p>
+      </div>
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = loans.map(l => {
+    const isOverdue = l.status === 'overdue';
+    const canReturn = l.status !== 'returned';
+    const returnBy = l.expected_return_date
+      ? `<span class="${isOverdue ? 'overdue-flag' : ''}">${fmtDate(l.expected_return_date)}${isOverdue ? ' ⚠ Overdue' : ''}</span>`
+      : '–';
+
+    return `
+    <tr>
+      <td class="cell-part-number">#${l.id}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:26px;height:26px;border-radius:50%;background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--accent);flex-shrink:0;">
+            ${(l.customer_name || '?').charAt(0).toUpperCase()}
+          </div>
+          <span class="cell-name">${l.customer_name || 'Unknown'}</span>
+        </div>
+      </td>
+      <td>
+        <div class="cell-name">${l.part_name || '–'}</div>
+        <div class="cell-desc">${l.part_number || ''}</div>
+      </td>
+      <td class="stock-num">${l.quantity}</td>
+      <td class="date-cell">${l.loan_price.toLocaleString('no-NO')} kr</td>
+      <td><span class="stock-num">${l.total_price.toLocaleString('no-NO')} kr</span></td>
+      <td>
+        <span class="employee-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
+          ${l.employee_name}
+        </span>
+      </td>
+      <td class="date-cell">${fmtDate(l.loan_date)}</td>
+      <td class="date-cell">${returnBy}</td>
+      <td>${statusBadge(l.status)}</td>
+      <td>
+        <div class="cell-actions">
+          ${canReturn ? `
+          <button class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="returnLoan(${l.id})" title="Mark as returned">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg>
+            Return
+          </button>` : ''}
+          <button class="btn-icon danger" onclick="deleteLoan(${l.id})" title="Delete record">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────
+const modal = document.getElementById('loan-modal');
+function openModal() { modal.classList.add('open'); }
+function closeModal() {
+  modal.classList.remove('open');
+  document.getElementById('loan-form').reset();
+  document.getElementById('loan-id').value = '';
+  document.getElementById('modal-title').textContent = 'Register Loan';
+}
+
+document.getElementById('add-loan-btn').addEventListener('click', () => {
+  // Default loan date to now
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('f-loan-date').value = now.toISOString().slice(0, 16);
+  openModal();
+});
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-cancel').addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+// ── Save loan ─────────────────────────────────────────────────────────
+document.getElementById('modal-save').addEventListener('click', async () => {
+  const id = document.getElementById('loan-id').value;
+  const customer_id = parseInt(document.getElementById('f-customer').value);
+  const part_id     = parseInt(document.getElementById('f-part').value);
+  const quantity    = parseInt(document.getElementById('f-quantity').value);
+  const loan_price  = parseFloat(document.getElementById('f-price').value) || 0;
+  const employee_name = document.getElementById('f-employee').value;
+  const loanDateVal = document.getElementById('f-loan-date').value;
+  const retDateVal  = document.getElementById('f-return-date').value;
+
+  if (!customer_id || !part_id || !quantity || !employee_name) {
+    toast('Please fill in all required fields (customer, part, quantity, employee)', 'error');
+    return;
+  }
+
+  const payload = {
+    customer_id, part_id, quantity, loan_price, employee_name,
+    loan_date: loanDateVal ? new Date(loanDateVal).toISOString() : null,
+    expected_return_date: retDateVal ? new Date(retDateVal).toISOString() : null,
+    notes: document.getElementById('f-notes').value.trim() || null,
+  };
+
+  try {
+    if (id) {
+      await api.updateLoan(id, payload);
+      toast('Loan updated', 'success');
+    } else {
+      await api.createLoan(payload);
+      toast('Loan registered successfully', 'success');
+    }
+    closeModal();
+    loadLoans();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+});
+
+// ── Mark as returned ──────────────────────────────────────────────────
+window.returnLoan = async (id) => {
+  if (!confirm('Mark this loan as returned? This will free up the part stock.')) return;
+  try {
+    await api.returnLoan(id);
+    toast('Loan marked as returned', 'success');
+    loadLoans();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+};
+
+// ── Delete loan ───────────────────────────────────────────────────────
+window.deleteLoan = async (id) => {
+  if (!confirm('Delete this loan record? If still active, stock will be adjusted automatically.')) return;
+  try {
+    await api.deleteLoan(id);
+    toast('Loan deleted', 'success');
+    loadLoans();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+};
+
+// ── Filters ───────────────────────────────────────────────────────────
+document.getElementById('search-input').addEventListener('input', applyFilters);
+document.getElementById('status-filter').addEventListener('change', applyFilters);
+
+// ── Init ──────────────────────────────────────────────────────────────
+loadDropdowns();
+loadLoans();
+</script>
+</body>
+</html>

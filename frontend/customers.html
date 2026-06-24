@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customers – Guleed Spareparts</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      </div>
+      <div class="logo-text-wrap"><strong>Guleed</strong><span>Spareparts</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Inventory</div>
+      <a href="parts.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="7" height="9"/><rect x="15" y="3" width="7" height="5"/><rect x="15" y="12" width="7" height="9"/><rect x="2" y="16" width="7" height="5"/></svg>
+        Parts
+      </a>
+      <a href="orders.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Orders
+      </a>
+      <a href="customers.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Customers
+      </a>
+      <a href="loans.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+        Loans
+      </a>
+      <div class="nav-section-label" style="margin-top:8px;">Analytics</div>
+      <a href="index.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Dashboard
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <div class="user-info-wrap"><strong id="sidebar-username">…</strong><span id="sidebar-role"></span></div>
+      </div>
+      <button class="logout-btn" id="logout-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign out
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <h1 class="topbar-title">Customers</h1>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" id="add-customer-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add customer
+        </button>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+        <div class="stat-card"><div class="stat-label">Total Customers</div><div class="stat-value" id="stat-total">–</div></div>
+        <div class="stat-card"><div class="stat-label">With Email</div><div class="stat-value" id="stat-email">–</div></div>
+        <div class="stat-card"><div class="stat-label">With Phone</div><div class="stat-value" id="stat-phone">–</div></div>
+      </div>
+
+      <div class="filter-bar">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="search" id="search-input" class="input-field" placeholder="Search by name, email or phone…">
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Address</th>
+              <th>Notes</th>
+              <th>Registered</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="customers-table-body">
+            <tr><td colspan="8" style="text-align:center;padding:48px;"><span class="spinner"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="customer-modal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">Add Customer</h2>
+      <button class="btn-icon" id="modal-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="customer-form" novalidate>
+        <input type="hidden" id="customer-id">
+        <div class="form-grid">
+          <div class="form-group span2">
+            <label class="form-label" for="f-name">Full Name *</label>
+            <input id="f-name" class="form-input" required placeholder="Ahmed Ali">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-phone">Phone</label>
+            <input id="f-phone" class="form-input" placeholder="+47 412 34 567">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-email">Email</label>
+            <input id="f-email" type="email" class="form-input" placeholder="ahmed@example.com">
+          </div>
+          <div class="form-group span2">
+            <label class="form-label" for="f-address">Address</label>
+            <input id="f-address" class="form-input" placeholder="Storgata 1, 0155 Oslo">
+          </div>
+          <div class="form-group span2">
+            <label class="form-label" for="f-notes">Notes</label>
+            <textarea id="f-notes" class="form-textarea" placeholder="Internal notes…"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-save">Save customer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script type="module">
+import { api } from './js/api.js';
+
+const token = localStorage.getItem('gs_token');
+if (!token) window.location.href = 'login.html';
+
+const user = JSON.parse(localStorage.getItem('gs_user') || '{}');
+const fullName = user.full_name || 'Employee';
+document.getElementById('sidebar-username').textContent = fullName;
+document.getElementById('sidebar-role').textContent = user.role || '';
+document.getElementById('user-avatar').textContent = fullName.charAt(0).toUpperCase();
+document.getElementById('logout-btn').addEventListener('click', () => { localStorage.clear(); window.location.href = 'login.html'; });
+
+let allCustomers = [];
+let editingId = null;
+
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── Avatar initials helper ────────────────────────────────────────────
+function initials(name) {
+  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+}
+
+async function loadCustomers() {
+  try {
+    const customers = await api.getCustomers() || [];
+    allCustomers = customers;
+    applyFilter();
+    document.getElementById('stat-total').textContent = customers.length;
+    document.getElementById('stat-email').textContent = customers.filter(c => c.email).length;
+    document.getElementById('stat-phone').textContent = customers.filter(c => c.phone).length;
+  } catch (err) { toast('Failed to load customers: ' + err.message, 'error'); }
+}
+
+function applyFilter() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const filtered = allCustomers.filter(c =>
+    !q ||
+    c.name.toLowerCase().includes(q) ||
+    (c.email || '').toLowerCase().includes(q) ||
+    (c.phone || '').includes(q)
+  );
+  renderTable(filtered);
+}
+
+function renderTable(customers) {
+  const tbody = document.getElementById('customers-table-body');
+  if (!customers.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      <h3>No customers found</h3><p>Add your first customer above.</p>
+    </div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = customers.map(c => `
+    <tr>
+      <td class="cell-part-number">${c.id}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:9px;">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--accent);flex-shrink:0;">${initials(c.name)}</div>
+          <span class="cell-name">${c.name}</span>
+        </div>
+      </td>
+      <td style="color:var(--text-secondary);font-size:12px;">${c.phone || '–'}</td>
+      <td style="color:var(--text-secondary);font-size:12px;">${c.email || '–'}</td>
+      <td style="color:var(--text-muted);font-size:12px;">${c.address || '–'}</td>
+      <td style="color:var(--text-muted);font-size:12px;">${c.notes ? c.notes.substring(0, 40) + (c.notes.length > 40 ? '…' : '') : '–'}</td>
+      <td style="color:var(--text-muted);font-size:12px;">${new Date(c.created_at).toLocaleDateString('en-GB')}</td>
+      <td>
+        <div class="cell-actions">
+          <button class="btn-icon" onclick="editCustomer(${c.id})" title="Edit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="btn-icon danger" onclick="deleteCustomer(${c.id}, '${c.name.replace(/'/g, "\\'")}')" title="Delete">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+const modal = document.getElementById('customer-modal');
+function openModal() { modal.classList.add('open'); }
+function closeModal() {
+  modal.classList.remove('open');
+  document.getElementById('customer-form').reset();
+  document.getElementById('customer-id').value = '';
+  document.getElementById('modal-title').textContent = 'Add Customer';
+  editingId = null;
+}
+
+document.getElementById('add-customer-btn').addEventListener('click', openModal);
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-cancel').addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+document.getElementById('search-input').addEventListener('input', applyFilter);
+
+window.editCustomer = async (id) => {
+  try {
+    const c = await api.getCustomer(id);
+    editingId = id;
+    document.getElementById('customer-id').value = id;
+    document.getElementById('modal-title').textContent = 'Edit Customer';
+    document.getElementById('f-name').value = c.name;
+    document.getElementById('f-phone').value = c.phone || '';
+    document.getElementById('f-email').value = c.email || '';
+    document.getElementById('f-address').value = c.address || '';
+    document.getElementById('f-notes').value = c.notes || '';
+    openModal();
+  } catch (err) { toast(err.message, 'error'); }
+};
+
+window.deleteCustomer = async (id, name) => {
+  if (!confirm(`Delete "${name}"?`)) return;
+  try {
+    await api.deleteCustomer(id);
+    toast(`"${name}" deleted`, 'success');
+    loadCustomers();
+  } catch (err) { toast(err.message, 'error'); }
+};
+
+document.getElementById('modal-save').addEventListener('click', async () => {
+  const id = document.getElementById('customer-id').value;
+  const payload = {
+    name: document.getElementById('f-name').value.trim(),
+    phone: document.getElementById('f-phone').value.trim() || null,
+    email: document.getElementById('f-email').value.trim() || null,
+    address: document.getElementById('f-address').value.trim() || null,
+    notes: document.getElementById('f-notes').value.trim() || null,
+  };
+  if (!payload.name) { toast('Name is required', 'error'); return; }
+  try {
+    if (id) { await api.updateCustomer(id, payload); toast('Customer updated', 'success'); }
+    else     { await api.createCustomer(payload);    toast('Customer added', 'success'); }
+    loadCustomers();
+    closeModal();
+  } catch (err) { toast(err.message, 'error'); }
+});
+
+loadCustomers();
+</script>
+</body>
+</html>

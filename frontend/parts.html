@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory – Guleed Spareparts</title>
+  <meta name="description" content="Inventory management for Guleed Spareparts">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="layout">
+
+  <!-- ─── Sidebar ───────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+        </svg>
+      </div>
+      <div class="logo-text-wrap">
+        <strong>Guleed</strong>
+        <span>Spareparts</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Inventory</div>
+      <a href="parts.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="7" height="9"/><rect x="15" y="3" width="7" height="5"/><rect x="15" y="12" width="7" height="9"/><rect x="2" y="16" width="7" height="5"/></svg>
+        Parts
+      </a>
+      <a href="orders.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Orders
+      </a>
+      <a href="customers.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Customers
+      </a>
+      <a href="loans.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+        Loans
+      </a>
+      <div class="nav-section-label" style="margin-top:8px;">Analytics</div>
+      <a href="index.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Dashboard
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <div class="user-info-wrap">
+          <strong id="sidebar-username">…</strong>
+          <span id="sidebar-role"></span>
+        </div>
+      </div>
+      <button class="logout-btn" id="logout-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign out
+      </button>
+    </div>
+  </aside>
+
+  <!-- ─── Main ──────────────────────────────────────────────────── -->
+  <div class="main-content">
+    <header class="topbar">
+      <h1 class="topbar-title">Parts</h1>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" id="add-part-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add part
+        </button>
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- Stats -->
+      <div class="stats-grid" id="summary-grid">
+        <div class="stat-card">
+          <div class="stat-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            Total Parts
+          </div>
+          <div class="stat-value" id="stat-total">–</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Low Stock</div>
+          <div class="stat-value warn" id="stat-low">–</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Out of Stock</div>
+          <div class="stat-value danger" id="stat-empty">–</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">On Loan</div>
+          <div class="stat-value" id="stat-loan">–</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Stock Value</div>
+          <div class="stat-value" id="stat-value" style="font-size:17px;letter-spacing:-.3px;">–</div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-bar">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="search" id="search-input" class="input-field" placeholder="Search by part number or name…">
+        </div>
+        <input type="text" id="car-make-input" class="input-field no-icon" placeholder="Car make" style="width:140px;">
+        <input type="text" id="car-model-input" class="input-field no-icon" placeholder="Car model" style="width:140px;">
+        <select id="category-filter" class="select-field">
+          <option value="">All categories</option>
+        </select>
+        <label class="filter-toggle">
+          <input type="checkbox" id="low-stock-toggle"> Low stock only
+        </label>
+      </div>
+
+      <!-- Table – click any row to register a purchase or loan -->
+      <div class="table-wrap">
+        <table class="data-table" aria-label="Spare parts">
+          <thead>
+            <tr>
+              <th>Part No.</th>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Location</th>
+              <th>Stock</th>
+              <th>Ordered</th>
+              <th>On Loan</th>
+              <th>Price</th>
+              <th>
+                <span style="font-size:10px;font-weight:400;color:var(--text-muted);white-space:nowrap;">
+                  Click row → buy / loan
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="parts-table-body">
+            <tr>
+              <td colspan="9" style="text-align:center;padding:48px;">
+                <span class="spinner"></span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ─── Part Action Modal (click on row) ───────────────────────────── -->
+<div class="modal-overlay" id="action-modal" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <div>
+        <h2 id="action-part-name" style="font-size:15px;font-weight:600;"></h2>
+        <p id="action-part-meta" style="font-size:12px;color:var(--text-muted);margin-top:2px;"></p>
+      </div>
+      <button class="btn-icon" id="action-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- Step 1: choose action -->
+    <div id="action-step-choose" class="modal-body">
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">What would you like to do with this part?</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <button id="choose-purchase" style="padding:20px 16px;border:2px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);cursor:pointer;transition:all 150ms;text-align:center;"
+          onmouseover="this.style.borderColor='var(--accent)';this.style.background='var(--accent-light)'"
+          onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--surface)'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="28" height="28" style="display:block;margin:0 auto 8px;"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <strong style="display:block;font-size:14px;font-weight:600;color:var(--text-primary);">Purchased</strong>
+          <span style="font-size:12px;color:var(--text-muted);">Customer buys the part</span>
+        </button>
+        <button id="choose-loan" style="padding:20px 16px;border:2px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);cursor:pointer;transition:all 150ms;text-align:center;"
+          onmouseover="this.style.borderColor='var(--green)';this.style.background='var(--green-light)'"
+          onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--surface)'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="28" height="28" style="display:block;margin:0 auto 8px;"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+          <strong style="display:block;font-size:14px;font-weight:600;color:var(--text-primary);">Loaned</strong>
+          <span style="font-size:12px;color:var(--text-muted);">Customer borrows the part</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2a: Purchase form -->
+    <div id="action-step-purchase" class="modal-body" style="display:none;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+        <button id="back-from-purchase" class="btn-icon" title="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span style="font-size:13px;font-weight:600;">Register Purchase</span>
+      </div>
+      <form id="purchase-form" novalidate>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Customer *</label>
+            <select id="pu-customer" class="form-select" required><option value="">Select customer…</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Quantity *</label>
+            <input id="pu-quantity" type="number" class="form-input" min="1" value="1" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Unit Price (NOK)</label>
+            <input id="pu-price" type="number" class="form-input" min="0" step="0.01" readonly style="background:var(--bg);">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Total (NOK)</label>
+            <input id="pu-total" type="number" class="form-input" readonly style="background:var(--bg);">
+          </div>
+          <div class="form-group span2">
+            <label class="form-label">Notes</label>
+            <textarea id="pu-notes" class="form-textarea" placeholder="Optional notes…"></textarea>
+          </div>
+        </div>
+      </form>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+        <button class="btn btn-secondary" id="action-close-2">Cancel</button>
+        <button class="btn btn-primary" id="save-purchase">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          Confirm purchase
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2b: Loan form -->
+    <div id="action-step-loan" class="modal-body" style="display:none;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+        <button id="back-from-loan" class="btn-icon" title="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span style="font-size:13px;font-weight:600;">Register Loan</span>
+      </div>
+      <form id="loan-quick-form" novalidate>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Customer *</label>
+            <select id="lo-customer" class="form-select" required><option value="">Select customer…</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Quantity *</label>
+            <input id="lo-quantity" type="number" class="form-input" min="1" value="1" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Loan price / item (NOK)</label>
+            <input id="lo-price" type="number" class="form-input" min="0" step="0.01" value="0" placeholder="0 = free">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Employee present *</label>
+            <select id="lo-employee" class="form-select" required><option value="">Select employee…</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Loan date</label>
+            <input id="lo-loan-date" type="datetime-local" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Return by</label>
+            <input id="lo-return-date" type="datetime-local" class="form-input">
+          </div>
+          <div class="form-group span2">
+            <label class="form-label">Notes</label>
+            <textarea id="lo-notes" class="form-textarea" placeholder="Optional notes…"></textarea>
+          </div>
+        </div>
+      </form>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+        <button class="btn btn-secondary" id="action-close-3">Cancel</button>
+        <button class="btn btn-primary" id="save-loan" style="background:var(--green);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+          Confirm loan
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Add / Edit Modal ─────────────────────────────────────────── -->
+<div class="modal-overlay" id="part-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">Add Part</h2>
+      <button class="btn-icon" id="modal-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="part-form" novalidate>
+        <input type="hidden" id="part-id">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label" for="f-part-number">Part Number *</label>
+            <input id="f-part-number" class="form-input" required placeholder="BR-8690">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-name">Part Name *</label>
+            <input id="f-name" class="form-input" required placeholder="Front Brake Pads">
+          </div>
+          <div class="form-group span2">
+            <label class="form-label" for="f-description">Description</label>
+            <textarea id="f-description" class="form-textarea" placeholder="Optional description…"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-category">Category *</label>
+            <input id="f-category" class="form-input" required placeholder="Brakes">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-location">Storage Location</label>
+            <input id="f-location" class="form-input" placeholder="Shelf B, Row 04">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-price">Price (NOK) *</label>
+            <input id="f-price" type="number" class="form-input" required min="0" step="0.01" placeholder="899">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-stock">Stock Quantity</label>
+            <input id="f-stock" type="number" class="form-input" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-ordered">Ordered Quantity</label>
+            <input id="f-ordered" type="number" class="form-input" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-loaned">On Loan</label>
+            <input id="f-loaned" type="number" class="form-input" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-threshold">Low Stock Threshold</label>
+            <input id="f-threshold" type="number" class="form-input" min="0" value="5">
+          </div>
+
+          <!-- Car Compatibility -->
+          <div class="form-group span2">
+            <div class="section-divider">Car Compatibility</div>
+            <div id="car-compat-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+            <button type="button" class="btn btn-secondary" id="add-car-btn" style="margin-top:6px;font-size:12px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add vehicle
+            </button>
+          </div>
+
+          <!-- Images -->
+          <div class="form-group span2" id="images-section" style="display:none;">
+            <div class="section-divider">Images <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;" id="image-count"></span></div>
+            <div class="image-gallery" id="image-gallery"></div>
+            <input type="file" id="image-upload" accept="image/jpeg,image/png,image/webp" style="display:none;">
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-save">Save part</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
