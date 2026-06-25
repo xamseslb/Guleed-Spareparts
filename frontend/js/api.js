@@ -99,7 +99,10 @@ async function flushQueue() {
   for (const entry of q) {
     if (stopped) { kept.push(entry); continue; }
     try {
-      await doFetch(entry.method, entry.path, entry.body, false);
+      const result = await doFetch(entry.method, entry.path, entry.body, false);
+      // undefined means the session expired (doFetch is redirecting to login) –
+      // keep the item so it syncs after re-login instead of being lost.
+      if (result === undefined) { stopped = true; kept.push(entry); continue; }
       synced++;
     } catch (err) {
       if (isNetworkError(err)) { stopped = true; kept.push(entry); }      // still offline
