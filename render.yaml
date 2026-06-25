@@ -1,4 +1,6 @@
-# Render Blueprint – deploys the FastAPI app + a managed Postgres database.
+# Render Blueprint – deploys the FastAPI app. The database is hosted on
+# Supabase: paste its "Session pooler" connection string into DATABASE_URL
+# in the Render dashboard (it is a secret, not stored in this file).
 # In the Render dashboard: New → Blueprint → pick this repo. Render reads this file.
 # Docs: https://render.com/docs/blueprint-spec
 
@@ -29,11 +31,5 @@ services:
       - key: ADMIN_PASSWORD
         sync: false               # set this yourself in the Render dashboard (secret)
       - key: DATABASE_URL
-        fromDatabase:
-          name: guuleed-db
-          property: connectionString
-
-databases:
-  - name: guuleed-db
-    plan: free
-    region: frankfurt
+        sync: false               # paste your Supabase "Session pooler" string here
+                                  # e.g. postgresql://postgres.<ref>:<pwd>@aws-0-eu-central-1.pooler.supabase.com:5432/postgres
