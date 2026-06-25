@@ -87,13 +87,26 @@
         <div class="stat-card"><div class="stat-label">Total Value on Loan</div><div class="stat-value" id="stat-value" style="font-size:17px;letter-spacing:-.3px;">–</div></div>
       </div>
 
+      <!-- List layout: status panel + table -->
+      <div class="list-layout">
+
+        <aside class="cat-panel">
+          <div class="cat-panel-head">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Status
+          </div>
+          <ul class="cat-list" id="status-panel-list"></ul>
+        </aside>
+
+        <div class="list-main">
+
       <!-- Filters -->
       <div class="filter-bar">
         <div class="search-wrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input type="search" id="search-input" class="input-field" placeholder="Search by customer, part or employee…">
         </div>
-        <select id="status-filter" class="select-field">
+        <select id="status-filter" class="select-field" style="display:none;">
           <option value="">All statuses</option>
           <option value="active">Active</option>
           <option value="overdue">Overdue</option>
@@ -124,6 +137,13 @@
           </tbody>
         </table>
       </div>
+
+      <div class="table-footer">
+        <span id="record-count" class="record-count">–</span>
+      </div>
+
+        </div><!-- /.list-main -->
+      </div><!-- /.list-layout -->
     </div>
   </div>
 </div>
@@ -300,9 +320,32 @@ async function loadLoans() {
     document.getElementById('stat-returned').textContent = returned;
     document.getElementById('stat-value').textContent =
       totalVal.toLocaleString('no-NO', { style: 'currency', currency: 'NOK', maximumFractionDigits: 0 });
+    renderStatusPanel();
   } catch (err) {
     toast('Failed to load loans: ' + err.message, 'error');
   }
+}
+
+// ── Status side-panel (Fleet style) ────────────────────────────────────
+const LOAN_STATUSES = [
+  { v: '', label: 'All loans' },
+  { v: 'active', label: 'Active' },
+  { v: 'overdue', label: 'Overdue' },
+  { v: 'returned', label: 'Returned' },
+];
+function renderStatusPanel() {
+  const list = document.getElementById('status-panel-list');
+  if (!list) return;
+  const active = document.getElementById('status-filter').value;
+  const count = v => v ? allLoans.filter(l => l.status === v).length : allLoans.length;
+  list.innerHTML = LOAN_STATUSES.map(s => `
+    <li class="cat-item ${s.v === active ? 'active' : ''}" data-status="${s.v}">
+      <span>${s.label}</span><span class="cat-count">${count(s.v)}</span></li>`).join('');
+  list.querySelectorAll('.cat-item').forEach(li => li.addEventListener('click', () => {
+    document.getElementById('status-filter').value = li.dataset.status;
+    applyFilters();
+    renderStatusPanel();
+  }));
 }
 
 function applyFilters() {
@@ -322,6 +365,8 @@ function applyFilters() {
 
 function renderTable(loans) {
   const tbody = document.getElementById('loans-table-body');
+  const rc = document.getElementById('record-count');
+  if (rc) rc.textContent = `${loans.length} loan${loans.length === 1 ? '' : 's'} listed`;
   if (!loans.length) {
     tbody.innerHTML = `<tr><td colspan="11">
       <div class="empty-state">

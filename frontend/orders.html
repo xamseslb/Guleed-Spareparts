@@ -72,13 +72,26 @@
         <div class="stat-card"><div class="stat-label">Cancelled</div><div class="stat-value danger" id="stat-cancelled">–</div></div>
       </div>
 
+      <!-- List layout: status panel + table -->
+      <div class="list-layout">
+
+        <aside class="cat-panel">
+          <div class="cat-panel-head">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Status
+          </div>
+          <ul class="cat-list" id="status-panel-list"></ul>
+        </aside>
+
+        <div class="list-main">
+
       <!-- Filters -->
       <div class="filter-bar">
         <div class="search-wrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input type="search" id="search-input" class="input-field" placeholder="Search by customer or part…">
         </div>
-        <select id="status-filter" class="select-field">
+        <select id="status-filter" class="select-field" style="display:none;">
           <option value="">All statuses</option>
           <option value="New">New</option>
           <option value="Processing">Processing</option>
@@ -108,6 +121,13 @@
           </tbody>
         </table>
       </div>
+
+      <div class="table-footer">
+        <span id="record-count" class="record-count">–</span>
+      </div>
+
+        </div><!-- /.list-main -->
+      </div><!-- /.list-layout -->
     </div>
   </div>
 </div>
@@ -204,9 +224,33 @@ async function loadOrders() {
     document.getElementById('stat-pending').textContent = orders.filter(o => o.status === 'New' || o.status === 'Processing').length;
     document.getElementById('stat-completed').textContent = orders.filter(o => o.status === 'Delivered').length;
     document.getElementById('stat-cancelled').textContent = orders.filter(o => o.status === 'Cancelled').length;
+    renderStatusPanel();
   } catch (err) {
     toast('Failed to load orders: ' + err.message, 'error');
   }
+}
+
+// ── Status side-panel (Fleet style) ────────────────────────────────────
+const ORDER_STATUSES = [
+  { v: '', label: 'All orders' },
+  { v: 'New', label: 'New' },
+  { v: 'Processing', label: 'Processing' },
+  { v: 'Delivered', label: 'Delivered' },
+  { v: 'Cancelled', label: 'Cancelled' },
+];
+function renderStatusPanel() {
+  const list = document.getElementById('status-panel-list');
+  if (!list) return;
+  const active = document.getElementById('status-filter').value;
+  const count = v => v ? allOrders.filter(o => o.status === v).length : allOrders.length;
+  list.innerHTML = ORDER_STATUSES.map(s => `
+    <li class="cat-item ${s.v === active ? 'active' : ''}" data-status="${s.v}">
+      <span>${s.label}</span><span class="cat-count">${count(s.v)}</span></li>`).join('');
+  list.querySelectorAll('.cat-item').forEach(li => li.addEventListener('click', () => {
+    document.getElementById('status-filter').value = li.dataset.status;
+    applyFilters();
+    renderStatusPanel();
+  }));
 }
 
 function applyFilters() {
@@ -222,6 +266,8 @@ function applyFilters() {
 
 function renderTable(orders) {
   const tbody = document.getElementById('orders-table-body');
+  const rc = document.getElementById('record-count');
+  if (rc) rc.textContent = `${orders.length} order${orders.length === 1 ? '' : 's'} listed`;
   if (!orders.length) {
     tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>

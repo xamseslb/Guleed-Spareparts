@@ -65,6 +65,8 @@ function stockBadge(part) {
 // ─── Render tabell ──────────────────────────────────────────────────
 function renderTable(parts) {
   const tbody = document.getElementById('parts-table-body');
+  const rc = document.getElementById('record-count');
+  if (rc) rc.textContent = `${parts.length} part${parts.length === 1 ? '' : 's'} listed`;
   if (!parts.length) {
     tbody.innerHTML = `
       <tr><td colspan="9">
@@ -116,17 +118,48 @@ async function loadParts() {
     allParts = await api.getParts({ q, category, car_make, car_model, low_stock_only }) || [];
     renderTable(allParts);
     populateCategories();
+    loadCategoryPanel();
   } catch (err) {
     toast('Error loading parts: ' + err.message, 'error');
   }
 }
 
 function populateCategories() {
-  const categories = [...new Set(allParts.map(p => p.category))].sort();
   const select = document.getElementById('category-filter');
   const current = select.value;
+  const categories = [...new Set((categoryCache || allParts).map(p => p.category))].sort();
   select.innerHTML = '<option value="">All categories</option>' +
     categories.map(c => `<option value="${c}" ${c === current ? 'selected' : ''}>${c}</option>`).join('');
+  // Autocomplete suggestions for the Add/Edit Part category field:
+  // pick an existing category or type a brand-new one.
+  const datalist = document.getElementById('category-options');
+  if (datalist) datalist.innerHTML = categories.map(c => `<option value="${c}"></option>`).join('');
+}
+
+// ─── Category side panel (Fleet-style tree) ─────────────────────────
+let categoryCache = null;
+async function loadCategoryPanel(forceRefresh) {
+  const list = document.getElementById('cat-panel-list');
+  if (!list) return;
+  if (!categoryCache || forceRefresh) {
+    try { categoryCache = await api.getParts({}) || []; } catch { return; }
+  }
+  const counts = {};
+  categoryCache.forEach(p => { counts[p.category] = (counts[p.category] || 0) + 1; });
+  const cats = Object.keys(counts).sort();
+  const active = document.getElementById('category-filter').value;
+
+  list.innerHTML =
+    `<li class="cat-item ${!active ? 'active' : ''}" data-cat="">
+       <span>All categories</span><span class="cat-count">${categoryCache.length}</span></li>` +
+    cats.map(c => `
+      <li class="cat-item ${c === active ? 'active' : ''}" data-cat="${c}">
+        <span>${c}</span><span class="cat-count">${counts[c]}</span></li>`).join('');
+
+  list.querySelectorAll('.cat-item').forEach(li => li.addEventListener('click', () => {
+    document.getElementById('category-filter').value = li.dataset.cat;
+    loadParts();
+  }));
 }
 
 // ─── Søk (debounce) ─────────────────────────────────────────────────
@@ -274,6 +307,7 @@ window.deletePart = async (id, name) => {
     toast(`"${name}" deleted`, 'success');
     loadParts();
     loadSummary();
+    loadCategoryPanel(true);
   } catch (err) {
     toast(err.message, 'error');
   }
@@ -315,6 +349,7 @@ document.getElementById('modal-save').addEventListener('click', async () => {
     }
     loadParts();
     loadSummary();
+    loadCategoryPanel(true);
     if (id) closeModal();
   } catch (err) {
     toast(err.message, 'error');
@@ -324,6 +359,7 @@ document.getElementById('modal-save').addEventListener('click', async () => {
 // ─── Init ────────────────────────────────────────────────────────────
 loadParts();
 loadSummary();
+loadCategoryPanel(true);
 
 // ════════════════════════════════════════════════════════════════════════
 // PART ACTION MODAL – opens when a user clicks on a table row

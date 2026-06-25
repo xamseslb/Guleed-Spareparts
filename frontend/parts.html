@@ -105,6 +105,21 @@
         </div>
       </div>
 
+      <!-- List layout: category panel + table -->
+      <div class="list-layout">
+
+        <!-- Left: category tree -->
+        <aside class="cat-panel">
+          <div class="cat-panel-head">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            Categories
+          </div>
+          <ul class="cat-list" id="cat-panel-list"></ul>
+        </aside>
+
+        <!-- Right: toolbar + table + footer -->
+        <div class="list-main">
+
       <!-- Filters -->
       <div class="filter-bar">
         <div class="search-wrap">
@@ -113,7 +128,7 @@
         </div>
         <input type="text" id="car-make-input" class="input-field no-icon" placeholder="Car make" style="width:140px;">
         <input type="text" id="car-model-input" class="input-field no-icon" placeholder="Car model" style="width:140px;">
-        <select id="category-filter" class="select-field">
+        <select id="category-filter" class="select-field" style="display:none;">
           <option value="">All categories</option>
         </select>
         <label class="filter-toggle">
@@ -150,6 +165,14 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Footer: record count -->
+      <div class="table-footer">
+        <span id="record-count" class="record-count">–</span>
+      </div>
+
+        </div><!-- /.list-main -->
+      </div><!-- /.list-layout -->
 
     </div>
   </div>
@@ -308,7 +331,8 @@
           </div>
           <div class="form-group">
             <label class="form-label" for="f-category">Category *</label>
-            <input id="f-category" class="form-input" required placeholder="Brakes">
+            <input id="f-category" class="form-input" required placeholder="Pick existing or type new…" list="category-options" autocomplete="off">
+            <datalist id="category-options"></datalist>
           </div>
           <div class="form-group">
             <label class="form-label" for="f-location">Storage Location</label>
