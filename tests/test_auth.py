@@ -51,7 +51,7 @@ def test_register_new_user_as_admin(client, auth_headers):
         headers=auth_headers,
     )
     assert response.status_code == 201
-    assert "opprettet" in response.json()["message"]
+    assert "created" in response.json()["message"]
 
 
 def test_invalid_token(client):

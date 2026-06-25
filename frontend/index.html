@@ -168,10 +168,10 @@ async function loadAll() {
 
     // ── KPIs ────────────────────────────────────────────────────────
     document.getElementById('kpi-parts').textContent = summary.total_parts ?? '–';
-    document.getElementById('kpi-low').textContent   = summary.lavt_lager ?? '–';
-    document.getElementById('kpi-empty').textContent = summary.tomt_for_vare ?? '–';
-    document.getElementById('kpi-loan').textContent  = summary['totalt_på_utlån'] ?? summary.totalt_pa_utlan ?? '–';
-    const val = summary.total_lagerverdi_nok;
+    document.getElementById('kpi-low').textContent   = summary.low_stock ?? '–';
+    document.getElementById('kpi-empty').textContent = summary.out_of_stock ?? '–';
+    document.getElementById('kpi-loan').textContent  = summary.total_on_loan ?? '–';
+    const val = summary.total_stock_value_nok;
     document.getElementById('kpi-value').textContent = val
       ? val.toLocaleString('no-NO', { style: 'currency', currency: 'NOK', maximumFractionDigits: 0 })
       : '–';
@@ -253,7 +253,7 @@ async function loadAll() {
     } else {
       list.innerHTML = lowStock.map(p => {
         const pct = Math.min(100, Math.round(p.criticality_ratio * 100));
-        const color = p.status === 'Tomt' ? 'var(--red)' : 'var(--amber)';
+        const color = p.status === 'Empty' ? 'var(--red)' : 'var(--amber)';
         return `
           <div class="low-stock-item">
             <div>
@@ -264,7 +264,7 @@ async function loadAll() {
               <div class="progress-bar">
                 <div class="progress-fill" style="width:${pct}%;background:${color};"></div>
               </div>
-              <span class="badge badge-${p.status === 'Tomt' ? 'empty' : 'low'}">${p.status === 'Tomt' ? 'Empty' : 'Low'}</span>
+              <span class="badge badge-${p.status === 'Empty' ? 'empty' : 'low'}">${p.status === 'Empty' ? 'Empty' : 'Low'}</span>
             </div>
           </div>`;
       }).join('');

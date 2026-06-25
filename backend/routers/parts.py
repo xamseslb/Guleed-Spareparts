@@ -15,7 +15,7 @@ from backend.schemas.part import PartCreate, PartUpdate, PartOut
 from backend.services.auth_service import get_current_user
 from backend.models.user import User
 
-router = APIRouter(prefix="/api/parts", tags=["Reservedeler"])
+router = APIRouter(prefix="/api/parts", tags=["Parts"])
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
 MAX_IMAGES = 10
@@ -26,7 +26,7 @@ MAX_FILE_SIZE_MB = 5
 # ─── Hent alle varer (med søk og filter) ──────────────────────────────
 @router.get("/", response_model=List[PartOut])
 def get_parts(
-    q: Optional[str] = Query(None, description="Søk på navn eller varenummer"),
+    q: Optional[str] = Query(None, description="Search by name or part number"),
     category: Optional[str] = Query(None),
     car_make: Optional[str] = Query(None),
     car_model: Optional[str] = Query(None),
@@ -70,7 +70,7 @@ def get_parts(
 def get_part(part_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     part = db.query(Part).filter(Part.id == part_id).first()
     if not part:
-        raise HTTPException(status_code=404, detail="Vare ikke funnet")
+        raise HTTPException(status_code=404, detail="Part not found")
     return part
 
 
@@ -79,7 +79,7 @@ def get_part(part_id: int, db: Session = Depends(get_db), current_user: User = D
 def create_part(data: PartCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     existing = db.query(Part).filter(Part.part_number == data.part_number).first()
     if existing:
-        raise HTTPException(status_code=400, detail=f"Varenummer '{data.part_number}' finnes allerede")
+        raise HTTPException(status_code=400, detail=f"Part number '{data.part_number}' already exists")
 
     part = Part(**data.model_dump())
     part.compatible_cars = [c.model_dump() for c in data.compatible_cars]
@@ -100,7 +100,7 @@ def update_part(
 ):
     part = db.query(Part).filter(Part.id == part_id).first()
     if not part:
-        raise HTTPException(status_code=404, detail="Vare ikke funnet")
+        raise HTTPException(status_code=404, detail="Part not found")
 
     update_data = data.model_dump(exclude_unset=True)
     if "compatible_cars" in update_data and update_data["compatible_cars"] is not None:
@@ -119,7 +119,7 @@ def update_part(
 def delete_part(part_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     part = db.query(Part).filter(Part.id == part_id).first()
     if not part:
-        raise HTTPException(status_code=404, detail="Vare ikke funnet")
+        raise HTTPException(status_code=404, detail="Part not found")
     # Slett alle tilhørende bilder
     for img_path in (part.images or []):
         full_path = os.path.join(UPLOAD_DIR, os.path.basename(img_path))
@@ -139,18 +139,18 @@ async def upload_image(
 ):
     part = db.query(Part).filter(Part.id == part_id).first()
     if not part:
-        raise HTTPException(status_code=404, detail="Vare ikke funnet")
+        raise HTTPException(status_code=404, detail="Part not found")
 
     current_images = part.images or []
     if len(current_images) >= MAX_IMAGES:
-        raise HTTPException(status_code=400, detail=f"Maks {MAX_IMAGES} bilder per vare")
+        raise HTTPException(status_code=400, detail=f"Max {MAX_IMAGES} images per part")
 
     if file.content_type not in ALLOWED_TYPES:
-        raise HTTPException(status_code=400, detail="Kun JPEG, PNG og WebP er tillatt")
+        raise HTTPException(status_code=400, detail="Only JPEG, PNG and WebP are allowed")
 
     content = await file.read()
     if len(content) > MAX_FILE_SIZE_MB * 1024 * 1024:
-        raise HTTPException(status_code=400, detail=f"Fil for stor (maks {MAX_FILE_SIZE_MB} MB)")
+        raise HTTPException(status_code=400, detail=f"File too large (max {MAX_FILE_SIZE_MB} MB)")
 
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else "jpg"
@@ -182,11 +182,11 @@ def delete_image(
 ):
     part = db.query(Part).filter(Part.id == part_id).first()
     if not part:
-        raise HTTPException(status_code=404, detail="Vare ikke funnet")
+        raise HTTPException(status_code=404, detail="Part not found")
 
     images = part.images or []
     if image_index < 0 or image_index >= len(images):
-        raise HTTPException(status_code=404, detail="Bilde ikke funnet")
+        raise HTTPException(status_code=404, detail="Image not found")
 
     img_to_delete = images[image_index]
     full_path = os.path.join(UPLOAD_DIR, os.path.basename(img_to_delete))

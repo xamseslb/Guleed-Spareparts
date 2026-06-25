@@ -45,10 +45,10 @@ async function loadSummary() {
   try {
     const s = await api.getSummary();
     document.getElementById('stat-total').textContent = s.total_parts ?? '–';
-    document.getElementById('stat-low').textContent = s.lavt_lager ?? '–';
-    document.getElementById('stat-empty').textContent = s.tomt_for_vare ?? '–';
-    document.getElementById('stat-loan').textContent = s['totalt_på_utlån'] ?? s.totalt_pa_utlan ?? '–';
-    const val = s.total_lagerverdi_nok;
+    document.getElementById('stat-low').textContent = s.low_stock ?? '–';
+    document.getElementById('stat-empty').textContent = s.out_of_stock ?? '–';
+    document.getElementById('stat-loan').textContent = s.total_on_loan ?? '–';
+    const val = s.total_stock_value_nok;
     document.getElementById('stat-value').textContent = val
       ? val.toLocaleString('no-NO', { style: 'currency', currency: 'NOK', maximumFractionDigits: 0 })
       : '–';
@@ -57,8 +57,8 @@ async function loadSummary() {
 
 // ─── Badge helpers ──────────────────────────────────────────────────
 function stockBadge(part) {
-  const statusLabel = { OK: 'OK', Lavt: 'Low', Tomt: 'Empty' }[part.stock_status] || part.stock_status;
-  const cls = { OK: 'ok', Lavt: 'low', Tomt: 'empty' }[part.stock_status] || 'ok';
+  const statusLabel = part.stock_status;
+  const cls = { OK: 'ok', Low: 'low', Empty: 'empty' }[part.stock_status] || 'ok';
   return `<span class="badge badge-${cls}">${part.stock_quantity} pcs (${statusLabel})</span>`;
 }
 
@@ -468,7 +468,7 @@ document.getElementById('save-purchase').addEventListener('click', async () => {
       customer_id,
       part_id: selectedPart.id,
       quantity,
-      status: 'completed',   // a direct purchase is completed immediately
+      status: 'Delivered',   // a direct purchase is completed immediately
       notes: notes || null,
     });
     toast(`Purchase registered: ${quantity}× ${selectedPart.name}`, 'success');

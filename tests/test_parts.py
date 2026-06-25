@@ -33,7 +33,7 @@ def test_create_duplicate_part_number(client, auth_headers):
     client.post("/api/parts/", json=SAMPLE_PART, headers=auth_headers)
     response = client.post("/api/parts/", json=SAMPLE_PART, headers=auth_headers)
     assert response.status_code == 400
-    assert "allerede" in response.json()["detail"]
+    assert "already" in response.json()["detail"]
 
 
 def test_get_all_parts(client, auth_headers):
@@ -95,15 +95,15 @@ def test_low_stock_filter(client, auth_headers):
 
 
 def test_stock_status_values(client, auth_headers):
-    # Tomt lager
+    # Empty stock
     empty_part = {**SAMPLE_PART, "part_number": "EMPTY-001", "stock_quantity": 0}
     r = client.post("/api/parts/", json=empty_part, headers=auth_headers)
-    assert r.json()["stock_status"] == "Tomt"
+    assert r.json()["stock_status"] == "Empty"
 
-    # Lavt lager
+    # Low stock
     low_part = {**SAMPLE_PART, "part_number": "LOW-002", "stock_quantity": 3, "low_stock_threshold": 5}
     r = client.post("/api/parts/", json=low_part, headers=auth_headers)
-    assert r.json()["stock_status"] == "Lavt"
+    assert r.json()["stock_status"] == "Low"
 
 
 def test_unauthorized_access(client):

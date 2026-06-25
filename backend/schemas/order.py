@@ -30,3 +30,6 @@ class OrderOut(BaseModel):
     notes: Optional[str]
     order_date: datetime
     updated_at: Optional[datetime]
+    customer_name: Optional[str] = None
+    part_name: Optional[str] = None
+    part_number: Optional[str] = None

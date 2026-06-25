@@ -69,7 +69,7 @@ class Part(Base):
         - 'OK'     → enough stock
         """
         if self.stock_quantity == 0:
-            return "Tomt"    # Empty
+            return "Empty"
         elif self.stock_quantity <= self.low_stock_threshold:
-            return "Lavt"    # Low
+            return "Low"
         return "OK"

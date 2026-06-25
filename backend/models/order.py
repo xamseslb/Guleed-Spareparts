@@ -6,10 +6,10 @@ import enum
 
 
 class OrderStatus(str, enum.Enum):
-    NY = "Ny"
-    BEHANDLES = "Behandles"
-    LEVERT = "Levert"
-    AVBRUTT = "Avbrutt"
+    NY = "New"
+    BEHANDLES = "Processing"
+    LEVERT = "Delivered"
+    AVBRUTT = "Cancelled"
 
 
 class Order(Base):

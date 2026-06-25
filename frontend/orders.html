@@ -80,9 +80,10 @@
         </div>
         <select id="status-filter" class="select-field">
           <option value="">All statuses</option>
-          <option value="pending">Pending</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
+          <option value="New">New</option>
+          <option value="Processing">Processing</option>
+          <option value="Delivered">Delivered</option>
+          <option value="Cancelled">Cancelled</option>
         </select>
       </div>
 
@@ -139,9 +140,10 @@
           <div class="form-group">
             <label class="form-label" for="f-status">Status</label>
             <select id="f-status" class="form-select">
-              <option value="pending">Pending</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="New">New</option>
+              <option value="Processing">Processing</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
             </select>
           </div>
           <div class="form-group span2">
@@ -187,7 +189,7 @@ function toast(msg, type = 'info') {
 
 // ── Status badge ───────────────────────────────────────────────────────
 function statusBadge(s) {
-  const map = { pending: 'low', completed: 'ok', cancelled: 'empty' };
+  const map = { New: 'low', Processing: 'warn', Delivered: 'ok', Cancelled: 'empty' };
   return `<span class="badge badge-${map[s] || 'ok'}">${s}</span>`;
 }
 
@@ -199,9 +201,9 @@ async function loadOrders() {
     applyFilters();
     // Stats
     document.getElementById('stat-total').textContent = orders.length;
-    document.getElementById('stat-pending').textContent = orders.filter(o => o.status === 'pending').length;
-    document.getElementById('stat-completed').textContent = orders.filter(o => o.status === 'completed').length;
-    document.getElementById('stat-cancelled').textContent = orders.filter(o => o.status === 'cancelled').length;
+    document.getElementById('stat-pending').textContent = orders.filter(o => o.status === 'New' || o.status === 'Processing').length;
+    document.getElementById('stat-completed').textContent = orders.filter(o => o.status === 'Delivered').length;
+    document.getElementById('stat-cancelled').textContent = orders.filter(o => o.status === 'Cancelled').length;
   } catch (err) {
     toast('Failed to load orders: ' + err.message, 'error');
   }

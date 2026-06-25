@@ -160,8 +160,8 @@ def get_inventory_summary(db: Session) -> Dict[str, Any]:
 
     return {
         "total_parts": len(parts),
-        "total_lagerverdi_nok": round(total_value, 2),          # total stock value in NOK
-        "lavt_lager": sum(1 for p in parts if p.stock_quantity <= p.low_stock_threshold),
-        "tomt_for_vare": sum(1 for p in parts if p.stock_quantity == 0),
-        "totalt_på_utlån": sum(p.loaned_quantity for p in parts),
+        "total_stock_value_nok": round(total_value, 2),         # total stock value in NOK
+        "low_stock": sum(1 for p in parts if p.stock_quantity <= p.low_stock_threshold),
+        "out_of_stock": sum(1 for p in parts if p.stock_quantity == 0),
+        "total_on_loan": sum(p.loaned_quantity for p in parts),
     }

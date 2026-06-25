@@ -129,9 +129,9 @@ def seed():
 
     # ─── Ordrer ───────────────────────────────────────────────────────
     ordrer = [
-        Order(customer_id=kunder[0].id, part_id=varer[0].id, quantity=2, unit_price_at_order=899.0, status="Levert"),
-        Order(customer_id=kunder[1].id, part_id=varer[2].id, quantity=4, unit_price_at_order=129.0, status="Ny"),
-        Order(customer_id=kunder[2].id, part_id=varer[1].id, quantity=1, unit_price_at_order=549.0, status="Behandles"),
+        Order(customer_id=kunder[0].id, part_id=varer[0].id, quantity=2, unit_price_at_order=899.0, status="Delivered"),
+        Order(customer_id=kunder[1].id, part_id=varer[2].id, quantity=4, unit_price_at_order=129.0, status="New"),
+        Order(customer_id=kunder[2].id, part_id=varer[1].id, quantity=1, unit_price_at_order=549.0, status="Processing"),
     ]
     db.add_all(ordrer)
     db.commit()

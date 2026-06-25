@@ -38,7 +38,7 @@ async function request(method, path, body = null, isFormData = false) {
   if (res.status === 204) return null;
 
   const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || `Feil: ${res.status}`);
+  if (!res.ok) throw new Error(data.detail || `Error: ${res.status}`);
   return data;
 }
 
