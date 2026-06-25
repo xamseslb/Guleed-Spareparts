@@ -23,21 +23,25 @@ from backend.database import Base
 from backend.routers import auth, parts, orders, customers, analytics
 from backend.routers import loans as loans_router
 from backend.seed import seed
+from backend.config import ALLOWED_ORIGINS, SEED_ON_STARTUP, IS_PRODUCTION
 
 # Step 1: Create all database tables from our model definitions
 # If the tables already exist, this does nothing (safe to call every startup)
 Base.metadata.create_all(bind=engine)
 
-# Step 2: Insert sample data on first run (only runs if DB is empty)
-seed()
+# Step 2: Insert sample data on first run (only runs if DB is empty).
+# Disabled by default in production – set SEED_ON_STARTUP=true to enable.
+if SEED_ON_STARTUP:
+    seed()
 
-# Step 3: Create the FastAPI application
+# Step 3: Create the FastAPI application.
+# Interactive API docs are disabled in production to avoid exposing the API surface.
 app = FastAPI(
     title="Guleed Spareparts API",
     description="Inventory management system for Guleed Spareparts auto parts store",
     version="1.0.0",
-    docs_url="/docs",      # Swagger UI – interactive API browser at http://localhost:8000/docs
-    redoc_url="/redoc",    # Alternative API documentation
+    docs_url=None if IS_PRODUCTION else "/docs",
+    redoc_url=None if IS_PRODUCTION else "/redoc",
 )
 
 # Step 4: Add CORS middleware
@@ -47,10 +51,10 @@ app = FastAPI(
 # In production, replace "*" with your actual domain name
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],        # allow all origins (any frontend can connect)
-    allow_credentials=True,
-    allow_methods=["*"],        # allow GET, POST, PUT, DELETE, etc.
-    allow_headers=["*"],        # allow all headers (including Authorization)
+    allow_origins=ALLOWED_ORIGINS,   # configurable via ALLOWED_ORIGINS env var
+    allow_credentials=False,         # we authenticate with Bearer tokens, not cookies
+    allow_methods=["*"],             # allow GET, POST, PUT, DELETE, etc.
+    allow_headers=["*"],             # allow all headers (including Authorization)
 )
 
 # Step 5: Serve uploaded images as static files

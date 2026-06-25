@@ -10,7 +10,7 @@ NOTE: We use the 'bcrypt' library directly (instead of passlib)
 because passlib is not yet compatible with bcrypt 5.0 on Python 3.14.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 import bcrypt
 from jose import JWTError, jwt
@@ -19,11 +19,10 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models.user import User
-import os
+from backend.config import SECRET_KEY
 
 # --- Config ---
-# SECRET_KEY is used to sign JWT tokens. Keep this private in production!
-SECRET_KEY = os.getenv("SECRET_KEY", "guleed-spareparts-secret-key-2024")
+# SECRET_KEY (from backend.config) is used to sign JWT tokens.
 ALGORITHM = "HS256"               # The algorithm used to sign the token
 ACCESS_TOKEN_EXPIRE_MINUTES = 480 # Token expires after 8 hours
 
@@ -61,7 +60,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     The token has an expiry time – after that, the user must log in again.
     """
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode["exp"] = expire   # Add expiry time into the token payload
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 

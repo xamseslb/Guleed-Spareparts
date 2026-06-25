@@ -7,10 +7,12 @@ This file handles:
   - GET  /api/auth/me       → logged-in user can see their own profile info
 """
 
+import time
+from collections import defaultdict
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timezone
 from backend.database import get_db
 from backend.models.user import User, UserRole
 from backend.schemas.customer import UserCreate, Token
@@ -20,6 +22,24 @@ from backend.services.auth_service import (
 
 # All routes in this file start with /api/auth/...
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
+
+# ─── Simple in-memory brute-force throttle for login ──────────────────
+# Blocks a username after too many failed attempts within a time window.
+# Note: per-process only; behind multiple workers, enforce at the proxy too.
+_LOGIN_MAX_ATTEMPTS = 5
+_LOGIN_WINDOW_SECONDS = 300  # 5 minutes
+_failed_logins: dict[str, list[float]] = defaultdict(list)
+
+
+def _check_login_rate_limit(username: str) -> None:
+    now = time.time()
+    recent = [t for t in _failed_logins[username] if now - t < _LOGIN_WINDOW_SECONDS]
+    _failed_logins[username] = recent
+    if len(recent) >= _LOGIN_MAX_ATTEMPTS:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many failed login attempts. Please try again later.",
+        )
 
 
 # GET /api/auth/users – returns all active users (used for employee dropdown in loan form)
@@ -40,11 +60,15 @@ def login(
     form_data: OAuth2PasswordRequestForm = Depends(),  # reads username/password from the form
     db: Session = Depends(get_db),
 ):
+    # Step 0: Throttle repeated failed attempts for this username
+    _check_login_rate_limit(form_data.username)
+
     # Step 1: Find the user in the database by username
     user = db.query(User).filter(User.username == form_data.username).first()
 
     # Step 2: Check if the user exists AND the password is correct
     if not user or not verify_password(form_data.password, user.hashed_password):
+        _failed_logins[form_data.username].append(time.time())
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Wrong username or password",
@@ -55,8 +79,9 @@ def login(
     if not user.is_active:
         raise HTTPException(status_code=403, detail="This account has been disabled")
 
-    # Step 4: Record the login time
-    user.last_login = datetime.utcnow()
+    # Step 4: Successful login – clear failed-attempt history and record the time
+    _failed_logins.pop(form_data.username, None)
+    user.last_login = datetime.now(timezone.utc)
     db.commit()
 
     # Step 5: Create a JWT token and return it

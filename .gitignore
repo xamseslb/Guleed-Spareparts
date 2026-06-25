@@ -1,4 +1,5 @@
-spareparts.db
+# Local databases (created/seeded on startup – never commit, they hold password hashes)
+*.db
 __pycache__/
 *.py[cod]
 *$py.class

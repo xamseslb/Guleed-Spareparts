@@ -57,3 +57,13 @@ def test_register_new_user_as_admin(client, auth_headers):
 def test_invalid_token(client):
     response = client.get("/api/auth/me", headers={"Authorization": "Bearer ugyldig_token"})
     assert response.status_code == 401
+
+
+def test_login_rate_limited_after_repeated_failures(client):
+    # Unique username so this doesn't interfere with other tests' throttle state
+    creds = {"username": "bruteforce_target", "password": "wrong"}
+    for _ in range(5):
+        assert client.post("/api/auth/login", data=creds).status_code == 401
+    # The 6th attempt within the window is blocked
+    blocked = client.post("/api/auth/login", data=creds)
+    assert blocked.status_code == 429
