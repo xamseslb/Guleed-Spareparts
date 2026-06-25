@@ -151,12 +151,16 @@
         <input type="hidden" id="order-id">
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label" for="f-customer">Customer ID *</label>
-            <input id="f-customer" type="number" class="form-input" required placeholder="1">
+            <label class="form-label" for="f-customer">Customer *</label>
+            <select id="f-customer" class="form-select" required>
+              <option value="">Select customer…</option>
+            </select>
           </div>
           <div class="form-group">
-            <label class="form-label" for="f-part">Part ID *</label>
-            <input id="f-part" type="number" class="form-input" required placeholder="1">
+            <label class="form-label" for="f-part">Part *</label>
+            <select id="f-part" class="form-select" required>
+              <option value="">Select part…</option>
+            </select>
           </div>
           <div class="form-group">
             <label class="form-label" for="f-quantity">Quantity *</label>
@@ -219,6 +223,31 @@ function statusBadge(s) {
 }
 
 // ── Load orders ────────────────────────────────────────────────────────
+// Populate the Customer and Part dropdowns from live data
+async function loadDropdowns() {
+  try {
+    const [customers, parts] = await Promise.all([api.getCustomers(), api.getParts()]);
+    const custSel = document.getElementById('f-customer');
+    custSel.innerHTML = '<option value="">Select customer…</option>';
+    (customers || []).forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.id;
+      o.textContent = `${c.name}${c.phone ? ' – ' + c.phone : ''}`;
+      custSel.appendChild(o);
+    });
+    const partSel = document.getElementById('f-part');
+    partSel.innerHTML = '<option value="">Select part…</option>';
+    (parts || []).forEach(p => {
+      const o = document.createElement('option');
+      o.value = p.id;
+      o.textContent = `${p.part_number} – ${p.name}`;
+      partSel.appendChild(o);
+    });
+  } catch (err) {
+    toast('Failed to load customers/parts: ' + err.message, 'error');
+  }
+}
+
 async function loadOrders() {
   try {
     const orders = await api.getOrders() || [];
@@ -343,7 +372,8 @@ window.deleteOrder = async (id) => {
   try {
     await api.deleteOrder(id);
     toast('Order deleted', 'success');
-    loadOrders();
+    loadDropdowns();
+loadOrders();
   } catch (err) { toast(err.message, 'error'); }
 };
 
@@ -362,11 +392,13 @@ document.getElementById('modal-save').addEventListener('click', async () => {
   try {
     if (id) { await api.updateOrder(id, payload); toast('Order updated', 'success'); }
     else     { await api.createOrder(payload);    toast('Order created', 'success'); }
-    loadOrders();
+    loadDropdowns();
+loadOrders();
     closeModal();
   } catch (err) { toast(err.message, 'error'); }
 });
 
+loadDropdowns();
 loadOrders();
 </script>
 <script>
