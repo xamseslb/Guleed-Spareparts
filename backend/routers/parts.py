@@ -11,6 +11,8 @@ from sqlalchemy.orm import Session
 from PIL import Image as PilImage
 from backend.database import get_db
 from backend.models.part import Part
+from backend.models.order import Order
+from backend.models.loan import Loan
 from backend.schemas.part import PartCreate, PartUpdate, PartOut
 from backend.services.auth_service import get_current_user
 from backend.models.user import User
@@ -120,6 +122,16 @@ def delete_part(part_id: int, db: Session = Depends(get_db), current_user: User 
     part = db.query(Part).filter(Part.id == part_id).first()
     if not part:
         raise HTTPException(status_code=404, detail="Part not found")
+
+    # Don't orphan order/loan history – block deletion if the part is referenced
+    order_count = db.query(Order).filter(Order.part_id == part_id).count()
+    loan_count = db.query(Loan).filter(Loan.part_id == part_id).count()
+    if order_count or loan_count:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot delete part: {order_count} order(s) and {loan_count} loan(s) reference it.",
+        )
+
     # Slett alle tilhørende bilder
     for img_path in (part.images or []):
         full_path = os.path.join(UPLOAD_DIR, os.path.basename(img_path))

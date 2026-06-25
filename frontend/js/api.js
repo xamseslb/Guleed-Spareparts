@@ -2,7 +2,11 @@
  * api.js – All kommunikasjon med Guleed Spareparts API.
  */
 
-const API_BASE = 'http://localhost:8000';
+// Use the same origin the page was served from (e.g. http://127.0.0.1:8000),
+// falling back to localhost when the HTML is opened directly as a file://.
+const API_BASE = window.location.origin.startsWith('http')
+  ? window.location.origin
+  : 'http://localhost:8000';
 
 function getToken() {
   return localStorage.getItem('gs_token');

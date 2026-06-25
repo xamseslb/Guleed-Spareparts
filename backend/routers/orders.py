@@ -2,7 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.database import get_db
-from backend.models.order import Order
+from backend.models.order import Order, OrderStatus
 from backend.models.part import Part
 from backend.schemas.order import OrderCreate, OrderUpdate, OrderOut
 from backend.services.auth_service import get_current_user
@@ -53,7 +53,23 @@ def create_order(data: OrderCreate, db: Session = Depends(get_db), current_user:
     if not part:
         raise HTTPException(status_code=404, detail="Part not found")
 
-    order = Order(**data.model_dump())
+    order_data = data.model_dump()
+    # Snapshot the part's current price if none was provided by the client
+    if order_data.get("unit_price_at_order") is None:
+        order_data["unit_price_at_order"] = part.unit_price
+
+    order = Order(**order_data)
+
+    # A delivered order consumes stock immediately
+    if order.status == OrderStatus.LEVERT:
+        available = part.stock_quantity - part.loaned_quantity
+        if order.quantity > available:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Not enough stock. Available: {available}, requested: {order.quantity}",
+            )
+        part.stock_quantity -= order.quantity
+
     db.add(order)
     db.commit()
     db.refresh(order)
@@ -70,8 +86,39 @@ def update_order(
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+
+    part = db.query(Part).filter(Part.id == order.part_id).first()
+    was_delivered = order.status == OrderStatus.LEVERT
+    old_quantity = order.quantity
+
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(order, field, value)
+
+    now_delivered = order.status == OrderStatus.LEVERT
+
+    # Keep stock_quantity in sync as the order moves in/out of "Delivered"
+    if part:
+        if not was_delivered and now_delivered:
+            available = part.stock_quantity - part.loaned_quantity
+            if order.quantity > available:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Not enough stock. Available: {available}, requested: {order.quantity}",
+                )
+            part.stock_quantity -= order.quantity
+        elif was_delivered and not now_delivered:
+            part.stock_quantity += old_quantity
+        elif was_delivered and now_delivered and order.quantity != old_quantity:
+            diff = order.quantity - old_quantity  # >0 means delivering more
+            if diff > 0:
+                available = part.stock_quantity - part.loaned_quantity
+                if diff > available:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Not enough stock. Available: {available}, requested additional: {diff}",
+                    )
+            part.stock_quantity -= diff
+
     db.commit()
     db.refresh(order)
     return enrich(order)
@@ -82,5 +129,10 @@ def delete_order(order_id: int, db: Session = Depends(get_db), current_user: Use
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+    # Return stock to inventory if this order had consumed it
+    if order.status == OrderStatus.LEVERT:
+        part = db.query(Part).filter(Part.id == order.part_id).first()
+        if part:
+            part.stock_quantity += order.quantity
     db.delete(order)
     db.commit()

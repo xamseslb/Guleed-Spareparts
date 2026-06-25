@@ -8,7 +8,9 @@ class OrderCreate(BaseModel):
     customer_id: int
     part_id: int
     quantity: int = Field(1, ge=1)
-    unit_price_at_order: float = Field(..., gt=0)
+    # Optional: if omitted, the backend snapshots the part's current unit price.
+    unit_price_at_order: Optional[float] = Field(None, gt=0)
+    status: OrderStatus = OrderStatus.NY
     notes: Optional[str] = None
 
 
@@ -26,6 +28,8 @@ class OrderOut(BaseModel):
     part_id: int
     quantity: int
     unit_price_at_order: float
+    unit_price: float          # alias of unit_price_at_order (what the frontend reads)
+    total_price: float         # computed: unit_price_at_order × quantity
     status: OrderStatus
     notes: Optional[str]
     order_date: datetime

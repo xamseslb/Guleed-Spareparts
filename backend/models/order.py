@@ -28,3 +28,13 @@ class Order(Base):
 
     customer = relationship("Customer", back_populates="orders")
     part = relationship("Part")
+
+    @property
+    def unit_price(self) -> float:
+        """Alias for the price snapshotted at order time (what the frontend reads)."""
+        return self.unit_price_at_order
+
+    @property
+    def total_price(self) -> float:
+        """Line total = unit price at order × quantity."""
+        return (self.unit_price_at_order or 0) * (self.quantity or 0)

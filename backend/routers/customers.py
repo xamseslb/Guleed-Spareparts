@@ -12,6 +12,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models.customer import Customer
+from backend.models.order import Order
+from backend.models.loan import Loan
 from backend.schemas.customer import CustomerCreate, CustomerUpdate, CustomerOut
 from backend.services.auth_service import get_current_user
 from backend.models.user import User
@@ -97,6 +99,15 @@ def delete_customer(
     c = db.query(Customer).filter(Customer.id == customer_id).first()
     if not c:
         raise HTTPException(status_code=404, detail="Customer not found")
+
+    # Don't orphan order/loan history – block deletion if the customer is referenced
+    order_count = db.query(Order).filter(Order.customer_id == customer_id).count()
+    loan_count = db.query(Loan).filter(Loan.customer_id == customer_id).count()
+    if order_count or loan_count:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot delete customer: {order_count} order(s) and {loan_count} loan(s) are linked to them.",
+        )
 
     db.delete(c)    # mark for deletion
     db.commit()     # actually delete from the database
