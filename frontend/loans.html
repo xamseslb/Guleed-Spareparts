@@ -523,6 +523,8 @@ document.getElementById('status-filter').addEventListener('change', applyFilters
 // ── Init ──────────────────────────────────────────────────────────────
 loadDropdowns();
 loadLoans();
+// Refresh once offline changes have synced to the server
+window.addEventListener('gs-synced', () => { loadDropdowns(); loadLoans(); });
 </script>
 <script>
   try { const u = JSON.parse(localStorage.getItem('gs_user') || '{}'); if (u.role === 'admin') document.querySelectorAll('.admin-only').forEach(e => e.style.display = ''); } catch (e) {}

@@ -21,7 +21,12 @@ function getHeaders(extra = {}) {
   };
 }
 
-async function request(method, path, body = null, isFormData = false) {
+// fetch() throws a TypeError when the network is unreachable (offline).
+function isNetworkError(err) {
+  return err instanceof TypeError;
+}
+
+async function doFetch(method, path, body, isFormData) {
   const headers = isFormData
     ? { 'Authorization': `Bearer ${getToken()}` }
     : getHeaders();
@@ -44,6 +49,100 @@ async function request(method, path, body = null, isFormData = false) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || `Error: ${res.status}`);
   return data;
+}
+
+// GET requests are cached so the app can still show data offline.
+async function request(method, path, body = null, isFormData = false) {
+  if (method === 'GET') {
+    try {
+      const data = await doFetch(method, path, body, isFormData);
+      try { localStorage.setItem('cache:' + path, JSON.stringify(data)); } catch (e) {}
+      return data;
+    } catch (err) {
+      if (isNetworkError(err)) {
+        const cached = localStorage.getItem('cache:' + path);
+        if (cached !== null) return JSON.parse(cached);
+      }
+      throw err;
+    }
+  }
+  return doFetch(method, path, body, isFormData);
+}
+
+// ─── Offline write queue (orders & credit sales) ─────────────────────
+const QUEUE_KEY = 'gs_sync_queue';
+const getQueue = () => { try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch (e) { return []; } };
+const setQueue = (q) => localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
+
+// Try the request; if the network is down, store it and replay later.
+async function requestQueued(method, path, body, label) {
+  try {
+    return await doFetch(method, path, body, false);
+  } catch (err) {
+    if (isNetworkError(err)) {
+      const q = getQueue();
+      q.push({ method, path, body, label, ts: new Date().getTime() });
+      setQueue(q);
+      updateBanner();
+      return { _queued: true };
+    }
+    throw err;  // a real validation/HTTP error – surface it
+  }
+}
+
+async function flushQueue() {
+  if (!navigator.onLine) { updateBanner(); return; }
+  const q = getQueue();
+  if (!q.length) { updateBanner(); return; }
+  const kept = [];
+  let synced = 0, stopped = false;
+  for (const entry of q) {
+    if (stopped) { kept.push(entry); continue; }
+    try {
+      await doFetch(entry.method, entry.path, entry.body, false);
+      synced++;
+    } catch (err) {
+      if (isNetworkError(err)) { stopped = true; kept.push(entry); }      // still offline
+      else { offlineToast(`A queued ${entry.label || 'change'} could not sync: ${err.message}`, 'error'); }
+    }
+  }
+  setQueue(kept);
+  updateBanner();
+  if (synced > 0) {
+    offlineToast(`Synced ${synced} offline change${synced === 1 ? '' : 's'}`, 'success');
+    window.dispatchEvent(new CustomEvent('gs-synced'));
+  }
+}
+
+// ─── Status banner + lightweight toast ───────────────────────────────
+function updateBanner() {
+  if (!document.body) return;
+  let el = document.getElementById('gs-offline-banner');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'gs-offline-banner';
+    el.className = 'offline-banner';
+    document.body.appendChild(el);
+  }
+  const pending = getQueue().length;
+  const offline = !navigator.onLine;
+  if (!offline && pending === 0) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.classList.toggle('syncing', !offline && pending > 0);
+  el.textContent = offline
+    ? (pending ? `Offline · ${pending} change${pending === 1 ? '' : 's'} waiting to sync`
+               : 'Offline · changes are saved on this device')
+    : `Syncing ${pending} change${pending === 1 ? '' : 's'}…`;
+}
+
+function offlineToast(msg, type = 'info') {
+  const c = document.getElementById('toast-container');
+  if (!c) return;
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
 }
 
 // ─── Auth ──────────────────────────────────────────────────────────
@@ -108,7 +207,7 @@ export const api = {
   },
 
   async createOrder(data) {
-    return request('POST', '/api/orders/', data);
+    return requestQueued('POST', '/api/orders/', data, 'order');
   },
 
   async updateOrder(id, data) {
@@ -168,7 +267,7 @@ export const api = {
   },
 
   async createLoan(data) {
-    return request('POST', '/api/loans/', data);
+    return requestQueued('POST', '/api/loans/', data, 'credit sale');
   },
 
   async updateLoan(id, data) {
@@ -202,4 +301,17 @@ export const api = {
   async updateUser(id, data) {
     return request('PUT', `/api/auth/users/${id}`, data);
   },
+
+  // How many offline changes are waiting to sync (for the UI)
+  pendingSyncCount() {
+    return getQueue().length;
+  },
 };
+
+// ─── Offline wiring: service worker + auto-sync + status ─────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+window.addEventListener('online', () => { updateBanner(); flushQueue(); });
+window.addEventListener('offline', updateBanner);
+window.addEventListener('load', () => { updateBanner(); flushQueue(); });
