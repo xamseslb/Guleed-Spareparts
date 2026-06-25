@@ -25,9 +25,12 @@ from backend.routers import loans as loans_router
 from backend.seed import seed
 from backend.config import ALLOWED_ORIGINS, SEED_ON_STARTUP, IS_PRODUCTION
 
-# Step 1: Create all database tables from our model definitions
-# If the tables already exist, this does nothing (safe to call every startup)
-Base.metadata.create_all(bind=engine)
+# Step 1: Database schema.
+# In production the schema is managed by Alembic migrations – run
+# `alembic upgrade head` before starting the app. Locally we create the
+# tables directly for convenience.
+if not IS_PRODUCTION:
+    Base.metadata.create_all(bind=engine)
 
 # Step 2: Insert sample data on first run (only runs if DB is empty).
 # Disabled by default in production – set SEED_ON_STARTUP=true to enable.
