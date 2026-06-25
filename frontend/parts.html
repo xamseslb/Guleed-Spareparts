@@ -336,8 +336,10 @@
           </div>
           <div class="form-group">
             <label class="form-label" for="f-category">Category *</label>
-            <input id="f-category" class="form-input" required placeholder="Pick existing or type new…" list="category-options" autocomplete="off">
-            <datalist id="category-options"></datalist>
+            <div class="combo">
+              <input id="f-category" class="form-input" required placeholder="Pick existing or type new…" autocomplete="off">
+              <div class="combo-menu" id="category-menu" hidden></div>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label" for="f-location">Storage Location</label>

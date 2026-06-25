@@ -496,6 +496,24 @@ input, select, textarea { font-family: var(--font); }
 }
 .form-textarea { resize: vertical; min-height: 72px; }
 
+/* ─── Combobox (pick an existing value or type a new one) ──────────── */
+.combo { position: relative; }
+.combo-menu {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 30;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  max-height: 184px; overflow-y: auto;
+  margin-top: 2px; padding: 3px;
+}
+.combo-menu[hidden] { display: none; }
+.combo-option {
+  padding: 6px 9px; font-size: 13px; cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.combo-option:hover { background: var(--accent-light); color: var(--accent); }
+
 /* ─── Image Gallery ───────────────────────────────────────────────── */
 .image-gallery { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; margin-top: 6px; }
 .image-thumb {

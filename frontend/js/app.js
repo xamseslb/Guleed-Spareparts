@@ -356,10 +356,43 @@ document.getElementById('modal-save').addEventListener('click', async () => {
   }
 });
 
+// ─── Category combobox: reliable dropdown of existing categories ─────
+// Shows existing categories on focus (filtered as you type); you can also
+// type a brand-new one. Replaces the unreliable native <datalist>.
+function setupCategoryCombo() {
+  const input = document.getElementById('f-category');
+  const menu = document.getElementById('category-menu');
+  if (!input || !menu) return;
+
+  const categories = () =>
+    [...new Set((categoryCache || allParts || []).map(p => p.category))].filter(Boolean).sort();
+
+  function render() {
+    const q = input.value.trim().toLowerCase();
+    const matches = categories().filter(c => c.toLowerCase().includes(q));
+    if (!matches.length) { menu.hidden = true; return; }
+    menu.innerHTML = matches.map(c => `<div class="combo-option" data-val="${c}">${c}</div>`).join('');
+    menu.hidden = false;
+  }
+
+  input.addEventListener('focus', render);
+  input.addEventListener('input', render);
+  // Use mousedown so the choice registers before the input's blur fires
+  menu.addEventListener('mousedown', (e) => {
+    const opt = e.target.closest('.combo-option');
+    if (!opt) return;
+    e.preventDefault();
+    input.value = opt.dataset.val;
+    menu.hidden = true;
+  });
+  input.addEventListener('blur', () => setTimeout(() => { menu.hidden = true; }, 150));
+}
+
 // ─── Init ────────────────────────────────────────────────────────────
 loadParts();
 loadSummary();
 loadCategoryPanel(true);
+setupCategoryCombo();
 
 // ════════════════════════════════════════════════════════════════════════
 // PART ACTION MODAL – opens when a user clicks on a table row
