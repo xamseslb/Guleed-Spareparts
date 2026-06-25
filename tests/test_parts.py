@@ -9,7 +9,7 @@ SAMPLE_PART = {
     "part_number": "TEST-001",
     "name": "Test Bremseklosser",
     "description": "Testbeskrivelse",
-    "category": "Bremser",
+    "category": "Brakes",
     "compatible_cars": [{"make": "Toyota", "model": "Corolla", "year_from": 2010, "year_to": 2022}],
     "stock_quantity": 10,
     "ordered_quantity": 5,
