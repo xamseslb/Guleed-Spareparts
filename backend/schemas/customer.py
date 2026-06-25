@@ -40,6 +40,13 @@ class UserCreate(BaseModel):
     role: str = "ansatt"
 
 
+class UserAdminUpdate(BaseModel):
+    """Admin edits to an existing user (all fields optional)."""
+    full_name: Optional[str] = None
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"

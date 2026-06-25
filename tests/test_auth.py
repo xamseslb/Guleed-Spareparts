@@ -59,6 +59,53 @@ def test_invalid_token(client):
     assert response.status_code == 401
 
 
+def _create_employee(client, auth_headers, username="100724"):
+    return client.post(
+        "/api/auth/register",
+        json={"username": username, "full_name": "Test Employee", "password": "passord123", "role": "ansatt"},
+        headers=auth_headers,
+    )
+
+
+def test_admin_can_deactivate_and_reactivate_user(client, auth_headers):
+    _create_employee(client, auth_headers)
+    users = client.get("/api/auth/users?include_inactive=true", headers=auth_headers).json()
+    emp = next(u for u in users if u["username"] == "100724")
+    assert emp["is_active"] is True
+
+    # Deactivate
+    r = client.put(f"/api/auth/users/{emp['id']}", json={"is_active": False}, headers=auth_headers)
+    assert r.status_code == 200
+    # Disabled user no longer appears in the default (active-only) list
+    active = client.get("/api/auth/users", headers=auth_headers).json()
+    assert all(u["username"] != "100724" for u in active)
+    # …but shows when including inactive
+    allu = client.get("/api/auth/users?include_inactive=true", headers=auth_headers).json()
+    assert any(u["username"] == "100724" and u["is_active"] is False for u in allu)
+
+    # Reactivate
+    client.put(f"/api/auth/users/{emp['id']}", json={"is_active": True}, headers=auth_headers)
+    active = client.get("/api/auth/users", headers=auth_headers).json()
+    assert any(u["username"] == "100724" for u in active)
+
+
+def test_admin_cannot_deactivate_self(client, auth_headers):
+    me = client.get("/api/auth/me", headers=auth_headers).json()
+    r = client.put(f"/api/auth/users/{me['id']}", json={"is_active": False}, headers=auth_headers)
+    assert r.status_code == 400
+    assert "your own account" in r.json()["detail"]
+
+
+def test_update_user_rejects_invalid_role(client, auth_headers):
+    resp = _create_employee(client, auth_headers, username="100725")
+    assert resp.status_code == 201
+    users = client.get("/api/auth/users?include_inactive=true", headers=auth_headers).json()
+    emp = next(u for u in users if u["username"] == "100725")
+    r = client.put(f"/api/auth/users/{emp['id']}", json={"role": "superuser"}, headers=auth_headers)
+    assert r.status_code == 400
+    assert "Invalid role" in r.json()["detail"]
+
+
 def test_login_rate_limited_after_repeated_failures(client):
     # Unique username so this doesn't interfere with other tests' throttle state
     creds = {"username": "bruteforce_target", "password": "wrong"}

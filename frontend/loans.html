@@ -53,6 +53,11 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
         Dashboard
       </a>
+      <div class="nav-section-label admin-only" style="margin-top:8px;display:none;">Administration</div>
+      <a href="users.html" class="nav-item admin-only" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        Users
+      </a>
     </nav>
     <div class="sidebar-footer">
       <div class="user-row">
@@ -518,6 +523,9 @@ document.getElementById('status-filter').addEventListener('change', applyFilters
 // ── Init ──────────────────────────────────────────────────────────────
 loadDropdowns();
 loadLoans();
+</script>
+<script>
+  try { const u = JSON.parse(localStorage.getItem('gs_user') || '{}'); if (u.role === 'admin') document.querySelectorAll('.admin-only').forEach(e => e.style.display = ''); } catch (e) {}
 </script>
 </body>
 </html>

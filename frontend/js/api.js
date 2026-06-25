@@ -189,4 +189,17 @@ export const api = {
   async getEmployees() {
     return request('GET', '/api/auth/users');
   },
+
+  // ─── User management (admin only) ────────────────────────────────
+  async getUsers(includeInactive = false) {
+    return request('GET', `/api/auth/users?include_inactive=${includeInactive ? 'true' : 'false'}`);
+  },
+
+  async createUser(data) {
+    return request('POST', '/api/auth/register', data);
+  },
+
+  async updateUser(id, data) {
+    return request('PUT', `/api/auth/users/${id}`, data);
+  },
 };
