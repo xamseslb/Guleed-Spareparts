@@ -86,10 +86,10 @@
     <div class="page-body">
       <!-- Stats -->
       <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
-        <div class="stat-card"><div class="stat-label">Active Loans</div><div class="stat-value" id="stat-active">–</div></div>
+        <div class="stat-card"><div class="stat-label">Unpaid</div><div class="stat-value" id="stat-active">–</div></div>
         <div class="stat-card"><div class="stat-label">Overdue</div><div class="stat-value danger" id="stat-overdue">–</div></div>
-        <div class="stat-card"><div class="stat-label">Returned</div><div class="stat-value" id="stat-returned">–</div></div>
-        <div class="stat-card"><div class="stat-label">Total Value on Loan</div><div class="stat-value" id="stat-value" style="font-size:17px;letter-spacing:-.3px;">–</div></div>
+        <div class="stat-card"><div class="stat-label">Paid</div><div class="stat-value" id="stat-returned">–</div></div>
+        <div class="stat-card"><div class="stat-label">Outstanding Value</div><div class="stat-value" id="stat-value" style="font-size:17px;letter-spacing:-.3px;">–</div></div>
       </div>
 
       <!-- List layout: status panel + table -->
@@ -113,9 +113,9 @@
         </div>
         <select id="status-filter" class="select-field" style="display:none;">
           <option value="">All statuses</option>
-          <option value="active">Active</option>
+          <option value="unpaid">Unpaid</option>
           <option value="overdue">Overdue</option>
-          <option value="returned">Returned</option>
+          <option value="paid">Paid</option>
         </select>
       </div>
 
@@ -132,7 +132,7 @@
               <th>Total</th>
               <th>Employee</th>
               <th>Loan Date</th>
-              <th>Return By</th>
+              <th>Payment by</th>
               <th>Status</th>
               <th></th>
             </tr>
@@ -209,9 +209,9 @@
             <input id="f-loan-date" type="datetime-local" class="form-input">
           </div>
 
-          <!-- Expected return date -->
+          <!-- Expected payment date -->
           <div class="form-group">
-            <label class="form-label" for="f-return-date">Expected return date</label>
+            <label class="form-label" for="f-return-date">Expected payment date</label>
             <input id="f-return-date" type="datetime-local" class="form-input">
           </div>
 
@@ -260,7 +260,7 @@ function toast(msg, type = 'info') {
 
 // ── Status badge ──────────────────────────────────────────────────────
 function statusBadge(s) {
-  const map = { active: 'ok', overdue: 'empty', returned: 'low' };
+  const map = { unpaid: 'low', overdue: 'empty', paid: 'ok' };
   return `<span class="badge badge-${map[s] || 'ok'}">${s.charAt(0).toUpperCase() + s.slice(1)}</span>`;
 }
 
@@ -313,11 +313,11 @@ async function loadLoans() {
     allLoans = await api.getLoans() || [];
     applyFilters();
 
-    const active   = allLoans.filter(l => l.status === 'active').length;
+    const active   = allLoans.filter(l => l.status === 'unpaid').length;
     const overdue  = allLoans.filter(l => l.status === 'overdue').length;
-    const returned = allLoans.filter(l => l.status === 'returned').length;
+    const returned = allLoans.filter(l => l.status === 'paid').length;
     const totalVal = allLoans
-      .filter(l => l.status !== 'returned')
+      .filter(l => l.status !== 'paid')
       .reduce((s, l) => s + (l.total_price || 0), 0);
 
     document.getElementById('stat-active').textContent = active;
@@ -334,9 +334,9 @@ async function loadLoans() {
 // ── Status side-panel (Fleet style) ────────────────────────────────────
 const LOAN_STATUSES = [
   { v: '', label: 'All loans' },
-  { v: 'active', label: 'Active' },
+  { v: 'unpaid', label: 'Unpaid' },
   { v: 'overdue', label: 'Overdue' },
-  { v: 'returned', label: 'Returned' },
+  { v: 'paid', label: 'Paid' },
 ];
 function renderStatusPanel() {
   const list = document.getElementById('status-panel-list');
@@ -385,7 +385,7 @@ function renderTable(loans) {
 
   tbody.innerHTML = loans.map(l => {
     const isOverdue = l.status === 'overdue';
-    const canReturn = l.status !== 'returned';
+    const canReturn = l.status !== 'paid';
     const returnBy = l.expected_return_date
       ? `<span class="${isOverdue ? 'overdue-flag' : ''}">${fmtDate(l.expected_return_date)}${isOverdue ? ' ⚠ Overdue' : ''}</span>`
       : '–';
@@ -420,9 +420,9 @@ function renderTable(loans) {
       <td>
         <div class="cell-actions">
           ${canReturn ? `
-          <button class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="returnLoan(${l.id})" title="Mark as returned">
+          <button class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="returnLoan(${l.id})" title="Mark as paid">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg>
-            Return
+            Mark paid
           </button>` : ''}
           <button class="btn-icon danger" onclick="deleteLoan(${l.id})" title="Delete record">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
@@ -494,10 +494,10 @@ document.getElementById('modal-save').addEventListener('click', async () => {
 
 // ── Mark as returned ──────────────────────────────────────────────────
 window.returnLoan = async (id) => {
-  if (!confirm('Mark this loan as returned? This will free up the part stock.')) return;
+  if (!confirm('Mark this credit sale as paid? The part stays sold — stock is not restored.')) return;
   try {
     await api.returnLoan(id);
-    toast('Loan marked as returned', 'success');
+    toast('Marked as paid', 'success');
     loadLoans();
   } catch (err) {
     toast(err.message, 'error');
@@ -506,7 +506,7 @@ window.returnLoan = async (id) => {
 
 // ── Delete loan ───────────────────────────────────────────────────────
 window.deleteLoan = async (id) => {
-  if (!confirm('Delete this loan record? If still active, stock will be adjusted automatically.')) return;
+  if (!confirm('Delete this record? If still unpaid, the reserved stock is released back.')) return;
   try {
     await api.deleteLoan(id);
     toast('Loan deleted', 'success');

@@ -55,7 +55,7 @@ def get_loans(
     # Auto-mark loans as overdue if expected return date has passed
     now = datetime.now(timezone.utc)
     overdue = db.query(Loan).filter(
-        Loan.status == "active",
+        Loan.status == "unpaid",
         Loan.expected_return_date != None,
         Loan.expected_return_date < now
     ).all()
@@ -122,9 +122,9 @@ def create_loan(
         loan_price=data.loan_price,
         employee_name=data.employee_name,
         loan_date=data.loan_date or datetime.now(timezone.utc),
-        expected_return_date=data.expected_return_date,
+        expected_return_date=data.expected_return_date,  # used as the expected payment date
         notes=data.notes,
-        status="active",
+        status="unpaid",
     )
     db.add(loan)
 
@@ -166,17 +166,18 @@ def return_loan(
     loan = db.query(Loan).filter(Loan.id == loan_id).first()
     if not loan:
         raise HTTPException(status_code=404, detail="Loan not found")
-    if loan.status == "returned":
-        raise HTTPException(status_code=400, detail="This loan is already marked as returned")
+    if loan.status == "paid":
+        raise HTTPException(status_code=400, detail="This credit sale is already marked as paid")
 
-    # Mark as returned
-    loan.status = "returned"
-    loan.returned_date = datetime.now(timezone.utc)
+    # Mark as paid. The part is sold – clear the outstanding amount AND remove it
+    # from stock. It is NOT returned to inventory.
+    loan.status = "paid"
+    loan.returned_date = datetime.now(timezone.utc)  # used as the payment date
 
-    # Reduce loaned_quantity on the part
     part = db.query(Part).filter(Part.id == loan.part_id).first()
     if part:
         part.loaned_quantity = max(0, part.loaned_quantity - loan.quantity)
+        part.stock_quantity = max(0, part.stock_quantity - loan.quantity)
 
     db.commit()
     db.refresh(loan)
@@ -194,8 +195,8 @@ def delete_loan(
     if not loan:
         raise HTTPException(status_code=404, detail="Loan not found")
 
-    # If still active, release the loaned_quantity back
-    if loan.status in ("active", "overdue"):
+    # If still unpaid (not yet a finalized sale), release the reserved quantity back
+    if loan.status in ("unpaid", "overdue"):
         part = db.query(Part).filter(Part.id == loan.part_id).first()
         if part:
             part.loaned_quantity = max(0, part.loaned_quantity - loan.quantity)
