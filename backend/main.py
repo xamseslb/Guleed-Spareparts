@@ -16,13 +16,14 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 from backend.database import engine
 # Import models so SQLAlchemy knows about the tables – even if not used directly here
 from backend.models import Part, Order, Customer, User  # noqa: F401
 from backend.database import Base
 from backend.routers import auth, parts, orders, customers, analytics
 from backend.routers import loans as loans_router
-from backend.seed import seed
+from backend.seed import seed, ensure_admin
 from backend.config import ALLOWED_ORIGINS, SEED_ON_STARTUP, IS_PRODUCTION
 
 # Step 1: Database schema.
@@ -36,6 +37,10 @@ if not IS_PRODUCTION:
 # Disabled by default in production – set SEED_ON_STARTUP=true to enable.
 if SEED_ON_STARTUP:
     seed()
+
+# Bootstrap the first admin from ADMIN_USERNAME/ADMIN_PASSWORD (no-op if unset
+# or an admin already exists). This is how production gets its first login.
+ensure_admin()
 
 # Step 3: Create the FastAPI application.
 # Interactive API docs are disabled in production to avoid exposing the API surface.
@@ -82,15 +87,10 @@ app.include_router(analytics.router)     # /api/analytics/...
 app.include_router(loans_router.router)  # /api/loans/...
 
 
-# A simple health check route – useful to confirm the server is running
-@app.get("/", tags=["Health"])
+# Visiting the bare domain sends people straight to the app's login page
+@app.get("/", include_in_schema=False)
 def root():
-    return {
-        "system": "Guleed Spareparts",
-        "status": "online",
-        "docs": "/docs",        # visit this for the interactive API explorer
-        "frontend": "/app",
-    }
+    return RedirectResponse(url="/app/login.html")
 
 
 @app.get("/health", tags=["Health"])

@@ -14,6 +14,10 @@ import os
 # Locally we use SQLite (a simple file-based database, no server needed).
 # In production, swap this for a real PostgreSQL database URL.
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./guleed_spareparts.db")
+# Some hosts (Render, Heroku, …) hand out a legacy "postgres://" scheme,
+# but SQLAlchemy 2.x requires "postgresql://". Normalize it.
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 # Create the database engine (the "driver" that talks to the DB file)
 engine = create_engine(

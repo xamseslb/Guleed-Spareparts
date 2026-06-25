@@ -3,10 +3,42 @@ Seed-data: oppretter testdata for utvikling og demonstrasjon.
 Kjør: python -m backend.seed
 """
 
+import os
 from backend.database import SessionLocal, engine
 from backend.models import Part, Order, Customer, User
+from backend.models.user import UserRole
 from backend.database import Base
 from backend.services.auth_service import hash_password
+
+
+def ensure_admin():
+    """
+    Create the first admin from ADMIN_USERNAME / ADMIN_PASSWORD env vars,
+    but only if no admin exists yet. Safe to call on every startup – it is a
+    no-op once an admin is present or when the env vars are not set. This is
+    how the first login is bootstrapped in production (where demo seeding is off).
+    """
+    username = os.getenv("ADMIN_USERNAME")
+    password = os.getenv("ADMIN_PASSWORD")
+    if not username or not password:
+        return
+
+    db = SessionLocal()
+    try:
+        if db.query(User).filter(User.role == UserRole.ADMIN).first():
+            return  # an admin already exists – don't touch it
+        if db.query(User).filter(User.username == username).first():
+            return  # username taken
+        db.add(User(
+            username=username,
+            full_name="Administrator",
+            hashed_password=hash_password(password),
+            role="admin",
+        ))
+        db.commit()
+        print(f"[OK] Bootstrapped admin user '{username}'")
+    finally:
+        db.close()
 
 
 def seed():
