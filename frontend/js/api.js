@@ -8,6 +8,11 @@ const API_BASE = window.location.origin.startsWith('http')
   ? window.location.origin
   : 'http://localhost:8000';
 
+// The downloadable desktop app runs against a server on this same PC, which is
+// always reachable regardless of internet/wifi. So the offline queue + banner
+// (meant for the cloud website) don't apply here.
+const IS_LOCAL = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
 function getToken() {
   return localStorage.getItem('gs_token');
 }
@@ -76,6 +81,7 @@ const setQueue = (q) => localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
 
 // Try the request; if the network is down, store it and replay later.
 async function requestQueued(method, path, body, label) {
+  if (IS_LOCAL) return doFetch(method, path, body, false);  // local server is always there
   try {
     return await doFetch(method, path, body, false);
   } catch (err) {
@@ -119,6 +125,7 @@ async function flushQueue() {
 
 // ─── Status banner + lightweight toast ───────────────────────────────
 function updateBanner() {
+  if (IS_LOCAL) return;            // the desktop app is always "online" locally
   if (!document.body) return;
   let el = document.getElementById('gs-offline-banner');
   if (!el) {
