@@ -68,12 +68,14 @@ app.add_middleware(
 # Step 5: Serve uploaded images as static files
 # When you upload a part image, it's saved in the 'uploads/' folder
 # This makes those files accessible at: http://localhost:8000/uploads/filename.jpg
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+# UPLOAD_DIR / FRONTEND_DIR are overridable via env vars so the packaged
+# desktop app can point them at a writable data folder and the bundled files.
+UPLOAD_DIR = os.environ.get("UPLOAD_DIR") or os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)  # create the folder if it doesn't exist
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # Also serve the frontend HTML files (optional – you can also just open them directly)
-FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
+FRONTEND_DIR = os.environ.get("FRONTEND_DIR") or os.path.join(os.path.dirname(__file__), "..", "frontend")
 if os.path.exists(FRONTEND_DIR):
     app.mount("/app", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 
