@@ -205,6 +205,7 @@ function renderTable(users) {
       <td style="color:var(--text-secondary);">${fmtDate(u.last_login)}</td>
       <td>
         <div class="cell-actions">
+          <button class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="setPassword(${u.id}, '${u.username}')">Password</button>
           ${u.is_active
             ? `<button class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="setActive(${u.id}, false, '${u.username}')">Disable</button>`
             : `<button class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="setActive(${u.id}, true, '${u.username}')">Enable</button>`}
@@ -212,6 +213,16 @@ function renderTable(users) {
       </td>
     </tr>`).join('');
 }
+
+window.setPassword = async (id, username) => {
+  const pw = prompt(`Enter a new password for "${username}" (at least 6 characters):`);
+  if (pw === null) return;                       // cancelled
+  if (pw.length < 6) { toast('Password must be at least 6 characters', 'error'); return; }
+  try {
+    await api.updateUser(id, { password: pw });
+    toast(`Password changed for ${username}`, 'success');
+  } catch (err) { toast(err.message, 'error'); }
+};
 
 window.setActive = async (id, active, username) => {
   const verb = active ? 'enable' : 'disable';

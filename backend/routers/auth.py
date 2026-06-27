@@ -153,6 +153,7 @@ def update_user(
         raise HTTPException(status_code=404, detail="User not found")
 
     fields = data.model_dump(exclude_unset=True)
+    new_password = fields.pop("password", None)
 
     if "role" in fields and fields["role"] is not None:
         valid = {r.value for r in UserRole}
@@ -168,6 +169,12 @@ def update_user(
 
     for field, value in fields.items():
         setattr(user, field, value)
+
+    if new_password is not None:
+        if len(new_password) < 6:
+            raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+        user.hashed_password = hash_password(new_password)
+
     db.commit()
     return {"message": f"User '{user.username}' updated"}
 

@@ -106,6 +106,26 @@ def test_update_user_rejects_invalid_role(client, auth_headers):
     assert "Invalid role" in r.json()["detail"]
 
 
+def test_admin_can_change_user_password(client, auth_headers):
+    client.post(
+        "/api/auth/register",
+        json={"username": "pwuser", "full_name": "PW User", "password": "oldpass123", "role": "ansatt"},
+        headers=auth_headers,
+    )
+    users = client.get("/api/auth/users?include_inactive=true", headers=auth_headers).json()
+    u = next(x for x in users if x["username"] == "pwuser")
+
+    # Too short → rejected
+    short = client.put(f"/api/auth/users/{u['id']}", json={"password": "12"}, headers=auth_headers)
+    assert short.status_code == 400
+
+    # Valid change → old password stops working, new one works
+    r = client.put(f"/api/auth/users/{u['id']}", json={"password": "newpass123"}, headers=auth_headers)
+    assert r.status_code == 200
+    assert client.post("/api/auth/login", data={"username": "pwuser", "password": "oldpass123"}).status_code == 401
+    assert client.post("/api/auth/login", data={"username": "pwuser", "password": "newpass123"}).status_code == 200
+
+
 def test_login_rate_limited_after_repeated_failures(client):
     # Unique username so this doesn't interfere with other tests' throttle state
     creds = {"username": "bruteforce_target", "password": "wrong"}
