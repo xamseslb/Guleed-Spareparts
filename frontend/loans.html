@@ -408,55 +408,97 @@ function renderTable(loans) {
     return;
   }
 
-  tbody.innerHTML = loans.map(l => {
-    const isOverdue = l.status === 'overdue';
-    const canReturn = l.status !== 'paid';
-    const returnBy = l.expected_return_date
-      ? `<span class="${isOverdue ? 'overdue-flag' : ''}">${fmtDate(l.expected_return_date)}${isOverdue ? ' ⚠ Overdue' : ''}</span>`
-      : '–';
+  const TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>';
+  const customerCell = l => `<div style="display:flex;align-items:center;gap:8px;">
+      <div style="width:26px;height:26px;border-radius:50%;background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--accent);flex-shrink:0;">${(l.customer_name || '?').charAt(0).toUpperCase()}</div>
+      <span class="cell-name">${l.customer_name || 'Unknown'}</span></div>`;
+  const employeeCell = l => `<span class="employee-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>${l.employee_name}</span>`;
+  const payByCell = l => l.expected_return_date
+    ? `<span class="${l.status === 'overdue' ? 'overdue-flag' : ''}">${fmtDate(l.expected_return_date)}${l.status === 'overdue' ? ' ⚠ Overdue' : ''}</span>` : '–';
+  const partCell = l => `<div class="cell-name">${l.part_name || '–'}</div><div class="cell-desc">${l.part_number || ''}</div>`;
+  const actions = l => `<div class="cell-actions">${l.status !== 'paid'
+      ? `<button class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="returnLoan(${l.id})" title="Mark as paid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg> Mark paid</button>` : ''}
+      <button class="btn-icon danger" onclick="deleteLoan(${l.id})" title="Delete record">${TRASH}</button></div>`;
 
-    return `
-    <tr>
-      <td class="cell-part-number">#${l.id}${l.group_ref ? `<div style="font-size:10px;color:var(--text-muted);font-weight:400;" title="Same sale">🧾 ${l.group_ref.slice(0, 7)}</div>` : ''}</td>
-      <td>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div style="width:26px;height:26px;border-radius:50%;background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--accent);flex-shrink:0;">
-            ${(l.customer_name || '?').charAt(0).toUpperCase()}
-          </div>
-          <span class="cell-name">${l.customer_name || 'Unknown'}</span>
-        </div>
-      </td>
-      <td>
-        <div class="cell-name">${l.part_name || '–'}</div>
-        <div class="cell-desc">${l.part_number || ''}</div>
-      </td>
-      <td class="stock-num">${l.quantity}</td>
-      <td class="date-cell">$${l.loan_price.toLocaleString('en-US')}</td>
-      <td><span class="stock-num">$${l.total_price.toLocaleString('en-US')}</span></td>
-      <td>
-        <span class="employee-chip">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
-          ${l.employee_name}
-        </span>
-      </td>
-      <td class="date-cell">${fmtDate(l.loan_date)}</td>
-      <td class="date-cell">${returnBy}</td>
-      <td>${statusBadge(l.status)}</td>
-      <td>
-        <div class="cell-actions">
-          ${canReturn ? `
-          <button class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="returnLoan(${l.id})" title="Mark as paid">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg>
-            Mark paid
-          </button>` : ''}
-          <button class="btn-icon danger" onclick="deleteLoan(${l.id})" title="Delete record">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-          </button>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
+  // Group rows that belong to the same sale (shared group_ref)
+  const groups = {}, order = [];
+  loans.forEach(l => {
+    const key = l.group_ref || ('s' + l.id);
+    if (!groups[key]) { groups[key] = []; order.push(key); }
+    groups[key].push(l);
+  });
+
+  let html = '';
+  order.forEach(key => {
+    const items = groups[key];
+    if (items.length === 1) {
+      const l = items[0];
+      html += `<tr>
+        <td class="cell-part-number">#${l.id}${l.group_ref ? `<div style="font-size:10px;color:var(--text-muted);font-weight:400;">🧾 ${l.group_ref.slice(0, 7)}</div>` : ''}</td>
+        <td>${customerCell(l)}</td><td>${partCell(l)}</td>
+        <td class="stock-num">${l.quantity}</td>
+        <td class="date-cell">$${l.loan_price.toLocaleString('en-US')}</td>
+        <td><span class="stock-num">$${l.total_price.toLocaleString('en-US')}</span></td>
+        <td>${employeeCell(l)}</td>
+        <td class="date-cell">${fmtDate(l.loan_date)}</td>
+        <td class="date-cell">${payByCell(l)}</td>
+        <td>${statusBadge(l.status)}</td>
+        <td>${actions(l)}</td></tr>`;
+    } else {
+      const f = items[0];
+      const total = items.reduce((s, x) => s + (x.total_price || 0), 0);
+      const qty = items.reduce((s, x) => s + (x.quantity || 0), 0);
+      const anyUnpaid = items.some(x => x.status !== 'paid');
+      const gStatus = anyUnpaid ? (items.some(x => x.status === 'overdue') ? 'overdue' : 'unpaid') : 'paid';
+      html += `<tr style="cursor:pointer;" onclick="toggleGroup('${key}')">
+        <td class="cell-part-number"><span id="chev-${key}">▸</span> <span style="font-weight:400;color:var(--text-muted);font-size:10px;">🧾 ${key.slice(0, 7)}</span></td>
+        <td>${customerCell(f)}</td>
+        <td><span class="cell-name">${items.length} parts</span> <span class="cell-desc">click to expand</span></td>
+        <td class="stock-num">${qty}</td>
+        <td class="date-cell">–</td>
+        <td><span class="stock-num">$${total.toLocaleString('en-US')}</span></td>
+        <td>${employeeCell(f)}</td>
+        <td class="date-cell">${fmtDate(f.loan_date)}</td>
+        <td class="date-cell">${payByCell(f)}</td>
+        <td>${statusBadge(gStatus)}</td>
+        <td onclick="event.stopPropagation()"><div class="cell-actions">
+          ${anyUnpaid ? `<button class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="payGroup('${key}')">Mark paid</button>` : ''}
+          <button class="btn-icon danger" onclick="deleteGroup('${key}')" title="Delete whole sale">${TRASH}</button>
+        </div></td></tr>`;
+      items.forEach(l => {
+        html += `<tr class="gc-${key}" style="display:none;background:var(--surface-2);">
+          <td style="color:var(--text-muted);padding-left:24px;">↳ #${l.id}</td>
+          <td></td><td>${partCell(l)}</td>
+          <td class="stock-num">${l.quantity}</td>
+          <td class="date-cell">$${l.loan_price.toLocaleString('en-US')}</td>
+          <td><span class="stock-num">$${l.total_price.toLocaleString('en-US')}</span></td>
+          <td></td><td></td><td></td>
+          <td>${statusBadge(l.status)}</td>
+          <td>${actions(l)}</td></tr>`;
+      });
+    }
+  });
+  tbody.innerHTML = html;
 }
+
+window.toggleGroup = (key) => {
+  document.querySelectorAll('.gc-' + key).forEach(r => { r.style.display = r.style.display === 'none' ? '' : 'none'; });
+  const chev = document.getElementById('chev-' + key);
+  if (chev) chev.textContent = chev.textContent.trim() === '▸' ? '▾' : '▸';
+};
+window.payGroup = async (key) => {
+  const items = allLoans.filter(l => l.group_ref === key && l.status !== 'paid');
+  if (!items.length) return;
+  if (!confirm(`Mark all ${items.length} parts in this sale as paid? They stay sold (stock is not restored).`)) return;
+  try { for (const l of items) await api.returnLoan(l.id); toast('Sale marked as paid', 'success'); loadLoans(); }
+  catch (err) { toast(err.message, 'error'); }
+};
+window.deleteGroup = async (key) => {
+  const items = allLoans.filter(l => l.group_ref === key);
+  if (!confirm(`Delete all ${items.length} parts in this sale?`)) return;
+  try { for (const l of items) await api.deleteLoan(l.id); toast('Sale deleted', 'success'); loadLoans(); }
+  catch (err) { toast(err.message, 'error'); }
+};
 
 // ── Modal ─────────────────────────────────────────────────────────────
 const modal = document.getElementById('loan-modal');
