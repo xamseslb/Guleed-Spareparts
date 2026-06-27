@@ -416,8 +416,10 @@ function renderTable(loans) {
   const payByCell = l => l.expected_return_date
     ? `<span class="${l.status === 'overdue' ? 'overdue-flag' : ''}">${fmtDate(l.expected_return_date)}${l.status === 'overdue' ? ' ⚠ Overdue' : ''}</span>` : '–';
   const partCell = l => `<div class="cell-name">${l.part_name || '–'}</div><div class="cell-desc">${l.part_number || ''}</div>`;
+  const PRICE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>';
   const actions = l => `<div class="cell-actions">${l.status !== 'paid'
-      ? `<button class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="returnLoan(${l.id})" title="Mark as paid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg> Mark paid</button>` : ''}
+      ? `<button class="btn-icon" onclick="editLoanPrice(${l.id}, ${l.loan_price || 0})" title="Edit price">${PRICE}</button>
+         <button class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="returnLoan(${l.id})" title="Mark as paid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg> Mark paid</button>` : ''}
       <button class="btn-icon danger" onclick="deleteLoan(${l.id})" title="Delete record">${TRASH}</button></div>`;
 
   // Group rows that belong to the same sale (shared group_ref)
@@ -497,6 +499,14 @@ window.deleteGroup = async (key) => {
   const items = allLoans.filter(l => l.group_ref === key);
   if (!confirm(`Delete all ${items.length} parts in this sale?`)) return;
   try { for (const l of items) await api.deleteLoan(l.id); toast('Sale deleted', 'success'); loadLoans(); }
+  catch (err) { toast(err.message, 'error'); }
+};
+window.editLoanPrice = async (id, current) => {
+  const v = prompt('New price per item (USD):', current);
+  if (v === null) return;
+  const price = parseFloat(v);
+  if (!(price >= 0)) { toast('Enter a valid price', 'error'); return; }
+  try { await api.updateLoan(id, { loan_price: price }); toast('Price updated', 'success'); loadLoans(); }
   catch (err) { toast(err.message, 'error'); }
 };
 

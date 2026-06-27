@@ -19,6 +19,7 @@ class OrderCreate(BaseModel):
 class OrderUpdate(BaseModel):
     status: Optional[OrderStatus] = None
     quantity: Optional[int] = Field(None, ge=1)
+    unit_price_at_order: Optional[float] = Field(None, gt=0)   # editable (e.g. on FX changes)
     notes: Optional[str] = None
 
 

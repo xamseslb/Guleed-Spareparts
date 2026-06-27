@@ -356,7 +356,9 @@ function renderTable(orders) {
   const partCell = o => `<div class="cell-name">${o.part_name || ('#' + o.part_id)}</div>${o.part_number ? `<div class="cell-desc">${o.part_number}</div>` : ''}`;
   const priceCell = v => v ? '$' + v.toLocaleString('en-US') : '–';
   const dateCell = o => o.order_date ? new Date(o.order_date).toLocaleDateString('en-GB') : '–';
+  const PRICE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>';
   const rowActions = o => `<div class="cell-actions">
+      ${(o.status === 'New' || o.status === 'Processing') ? `<button class="btn-icon" onclick="editOrderPrice(${o.id}, ${o.unit_price || 0})" title="Edit price">${PRICE}</button>` : ''}
       <button class="btn-icon" onclick="editOrder(${o.id})" title="Edit">${EDIT}</button>
       <button class="btn-icon danger" onclick="deleteOrder(${o.id})" title="Delete">${TRASH}</button></div>`;
 
@@ -422,6 +424,14 @@ window.deleteGroup = async (key) => {
   const items = allOrders.filter(o => o.group_ref === key);
   if (!confirm(`Delete all ${items.length} parts in this purchase?`)) return;
   try { for (const o of items) await api.deleteOrder(o.id); toast('Purchase deleted', 'success'); loadOrders(); }
+  catch (err) { toast(err.message, 'error'); }
+};
+window.editOrderPrice = async (id, current) => {
+  const v = prompt('New unit price (USD):', current);
+  if (v === null) return;
+  const price = parseFloat(v);
+  if (!(price > 0)) { toast('Enter a valid price greater than 0', 'error'); return; }
+  try { await api.updateOrder(id, { unit_price_at_order: price }); toast('Price updated', 'success'); loadOrders(); }
   catch (err) { toast(err.message, 'error'); }
 };
 
