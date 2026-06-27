@@ -81,18 +81,18 @@ function renderTable(parts) {
 
   tbody.innerHTML = parts.map(p => `
     <tr style="cursor:pointer;" onclick="openPartAction(${p.id})">
-      <td><span class="cell-part-number">${p.part_number}</span></td>
-      <td>
+      <td data-label="Part No."><span class="cell-part-number">${p.part_number}</span></td>
+      <td data-label="Name">
         <div class="cell-name">${p.name}</div>
         ${p.description ? `<div class="cell-desc">${p.description.substring(0, 60)}${p.description.length > 60 ? '…' : ''}</div>` : ''}
       </td>
-      <td><span class="badge badge-category">${p.category}</span></td>
-      <td style="color:var(--text-secondary);font-size:12px;">${p.location || '–'}</td>
-      <td>${stockBadge(p)}</td>
-      <td class="stock-secondary">${p.ordered_quantity}</td>
-      <td class="stock-secondary">${p.loaned_quantity}</td>
-      <td><span class="stock-num">$${(p.unit_price).toLocaleString('en-US')}</span></td>
-      <td onclick="event.stopPropagation()">
+      <td data-label="Category"><span class="badge badge-category">${p.category}</span></td>
+      <td data-label="Location" style="color:var(--text-secondary);font-size:12px;">${p.location || '–'}</td>
+      <td data-label="Stock">${stockBadge(p)}</td>
+      <td data-label="Ordered" class="stock-secondary">${p.ordered_quantity}</td>
+      <td data-label="On Loan" class="stock-secondary">${p.loaned_quantity}</td>
+      <td data-label="Price"><span class="stock-num">$${(p.unit_price).toLocaleString('en-US')}</span></td>
+      <td class="card-actions" onclick="event.stopPropagation()">
         <div class="cell-actions">
           <button class="btn-icon" onclick="editPart(${p.id})" title="Edit" aria-label="Edit ${p.name}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>

@@ -706,4 +706,53 @@ input, select, textarea { font-family: var(--font); }
   .main-content { margin-left: 0; }
   .menu-toggle { display: inline-flex; }   /* show the hamburger on phones */
   .form-grid { grid-template-columns: 1fr; }
+  .page-body { padding: 12px; }
+
+  /* Stack the category/status panel ABOVE the table so the table gets the
+     full screen width instead of sharing it. */
+  .list-layout { flex-direction: column; }
+  .cat-panel {
+    width: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .cat-panel-head { display: none; }                 /* save vertical space */
+  .cat-list { display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .cat-item { border-bottom: none; border-right: 1px solid var(--border); white-space: nowrap; }
+  .cat-item.active { box-shadow: inset 0 -2px 0 var(--accent); }   /* underline, not a left bar */
+  .list-main .table-wrap { border-radius: 0 0 var(--radius) var(--radius); }
+
+  /* Turn flat tables (Parts, Customers) into stacked, labelled cards. Each
+     row becomes a card and each cell shows its column name above the value. */
+  table.cards-sm thead { display: none; }
+  table.cards-sm, table.cards-sm tbody { display: block; width: 100%; }
+  table.cards-sm tr {
+    display: block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px 12px;
+    margin: 10px 0;
+  }
+  /* Compact rows: label on the left, value on the right. */
+  table.cards-sm td {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    white-space: normal;
+    text-align: right;
+  }
+  table.cards-sm tr td:last-child { border-bottom: none; }
+  table.cards-sm td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0; text-align: left;
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .03em; color: var(--text-muted);
+  }
+  /* The Name is the card's title: full width, left-aligned, no label. */
+  table.cards-sm td[data-label="Name"] { flex-direction: column; align-items: stretch; text-align: left; }
+  table.cards-sm td[data-label="Name"]::before { display: none; }
+  table.cards-sm td[data-label="Name"] .cell-name { font-size: 15px; }
+  /* The actions cell has no label – right-align its buttons in the card. */
+  table.cards-sm td.card-actions { display: flex; justify-content: flex-end; }
 }
