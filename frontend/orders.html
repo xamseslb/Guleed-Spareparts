@@ -161,16 +161,6 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label" for="f-part">Part *</label>
-            <select id="f-part" class="form-select" required>
-              <option value="">Select part…</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="f-quantity">Quantity *</label>
-            <input id="f-quantity" type="number" class="form-input" required min="1" value="1">
-          </div>
-          <div class="form-group">
             <label class="form-label" for="f-status">Status</label>
             <select id="f-status" class="form-select">
               <option value="New">New</option>
@@ -179,10 +169,16 @@
               <option value="Cancelled">Cancelled</option>
             </select>
           </div>
-          <div class="form-group span2">
-            <label class="form-label" for="f-notes">Notes</label>
-            <textarea id="f-notes" class="form-textarea" placeholder="Optional notes…"></textarea>
-          </div>
+        </div>
+
+        <div class="section-divider" style="margin-top:14px;">Parts in this purchase</div>
+        <div id="order-lines"></div>
+        <button type="button" class="btn btn-secondary" id="add-line-btn" style="margin-top:4px;padding:6px 12px;font-size:12px;">+ Add another part</button>
+        <div id="order-total" style="text-align:right;font-weight:650;font-size:15px;margin-top:12px;color:var(--text-primary);"></div>
+
+        <div class="form-group" style="margin-top:12px;">
+          <label class="form-label" for="f-notes">Notes</label>
+          <textarea id="f-notes" class="form-textarea" placeholder="Optional notes…"></textarea>
         </div>
       </form>
     </div>
@@ -228,6 +224,9 @@ function statusBadge(s) {
 
 // ── Load orders ────────────────────────────────────────────────────────
 // Populate the Customer and Part dropdowns from live data
+let partsData = [];
+let partOptionsHTML = '<option value="">Select part…</option>';
+
 async function loadDropdowns() {
   try {
     const [customers, parts] = await Promise.all([api.getCustomers(), api.getParts()]);
@@ -239,17 +238,58 @@ async function loadDropdowns() {
       o.textContent = `${c.name}${c.phone ? ' – ' + c.phone : ''}`;
       custSel.appendChild(o);
     });
-    const partSel = document.getElementById('f-part');
-    partSel.innerHTML = '<option value="">Select part…</option>';
-    (parts || []).forEach(p => {
-      const o = document.createElement('option');
-      o.value = p.id;
-      o.textContent = `${p.part_number} – ${p.name}`;
-      partSel.appendChild(o);
-    });
+    partsData = parts || [];
+    partOptionsHTML = '<option value="">Select part…</option>' +
+      partsData.map(p => `<option value="${p.id}">${p.part_number} – ${p.name}</option>`).join('');
   } catch (err) {
     toast('Failed to load customers/parts: ' + err.message, 'error');
   }
+}
+
+// ── Cart lines: buy several parts in one purchase ─────────────────────
+function unitPrice(partId) {
+  const p = partsData.find(x => String(x.id) === String(partId));
+  return p ? (p.unit_price || 0) : 0;
+}
+function lineData() {
+  return [...document.querySelectorAll('#order-lines .order-line')].map(r => ({
+    part_id: parseInt(r.querySelector('.line-part').value) || 0,
+    quantity: parseInt(r.querySelector('.line-qty').value) || 0,
+  }));
+}
+function updateTotal() {
+  const total = lineData().reduce((s, l) => s + (l.part_id ? unitPrice(l.part_id) * (l.quantity || 0) : 0), 0);
+  document.getElementById('order-total').textContent = total > 0 ? `Total: ${total.toLocaleString('no-NO')} kr` : '';
+}
+function addLine(partId = '', qty = 1) {
+  const wrap = document.getElementById('order-lines');
+  const row = document.createElement('div');
+  row.className = 'order-line';
+  row.style.cssText = 'display:flex;gap:8px;align-items:flex-end;margin-bottom:8px;';
+  row.innerHTML = `
+    <div class="form-group" style="flex:1;min-width:0;">
+      <label class="form-label">Part *</label>
+      <select class="form-select line-part">${partOptionsHTML}</select>
+    </div>
+    <div class="form-group" style="width:84px;">
+      <label class="form-label">Qty</label>
+      <input type="number" class="form-input line-qty" min="1" value="${qty}">
+    </div>
+    <button type="button" class="btn-icon danger line-remove" title="Remove" style="margin-bottom:1px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>`;
+  wrap.appendChild(row);
+  row.querySelector('.line-part').value = partId;
+  row.querySelector('.line-part').addEventListener('change', updateTotal);
+  row.querySelector('.line-qty').addEventListener('input', updateTotal);
+  row.querySelector('.line-remove').addEventListener('click', () => {
+    if (wrap.querySelectorAll('.order-line').length > 1) { row.remove(); updateTotal(); }
+  });
+  updateTotal();
+}
+function resetLines(lines) {
+  document.getElementById('order-lines').innerHTML = '';
+  (lines && lines.length ? lines : [{ part_id: '', quantity: 1 }]).forEach(l => addLine(l.part_id, l.quantity));
 }
 
 async function loadOrders() {
@@ -315,7 +355,7 @@ function renderTable(orders) {
   }
   tbody.innerHTML = orders.map(o => `
     <tr>
-      <td class="cell-part-number">#${o.id}</td>
+      <td class="cell-part-number">#${o.id}${o.group_ref ? `<div style="font-size:10px;color:var(--text-muted);font-weight:400;" title="Same purchase">🧾 ${o.group_ref.slice(0, 7)}</div>` : ''}</td>
       <td style="color:var(--text-secondary);font-size:12px;">${o.customer_id}</td>
       <td style="color:var(--text-secondary);font-size:12px;">${o.part_id}</td>
       <td class="stock-num">${o.quantity}</td>
@@ -348,7 +388,18 @@ function closeModal() {
   editingId = null;
 }
 
-document.getElementById('add-order-btn').addEventListener('click', openModal);
+document.getElementById('add-order-btn').addEventListener('click', () => {
+  editingId = null;
+  document.getElementById('order-id').value = '';
+  document.getElementById('modal-title').textContent = 'New Order';
+  document.getElementById('f-customer').value = '';
+  document.getElementById('f-status').value = 'New';
+  document.getElementById('f-notes').value = '';
+  document.getElementById('add-line-btn').style.display = '';
+  resetLines([]);
+  openModal();
+});
+document.getElementById('add-line-btn').addEventListener('click', () => addLine());
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal-cancel').addEventListener('click', closeModal);
 modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
@@ -363,10 +414,10 @@ window.editOrder = async (id) => {
     document.getElementById('order-id').value = id;
     document.getElementById('modal-title').textContent = 'Edit Order';
     document.getElementById('f-customer').value = o.customer_id;
-    document.getElementById('f-part').value = o.part_id;
-    document.getElementById('f-quantity').value = o.quantity;
     document.getElementById('f-status').value = o.status;
     document.getElementById('f-notes').value = o.notes || '';
+    document.getElementById('add-line-btn').style.display = 'none';   // one part when editing
+    resetLines([{ part_id: o.part_id, quantity: o.quantity }]);
     openModal();
   } catch (err) { toast(err.message, 'error'); }
 };
@@ -383,21 +434,29 @@ loadOrders();
 
 document.getElementById('modal-save').addEventListener('click', async () => {
   const id = document.getElementById('order-id').value;
-  const payload = {
-    customer_id: parseInt(document.getElementById('f-customer').value),
-    part_id: parseInt(document.getElementById('f-part').value),
-    quantity: parseInt(document.getElementById('f-quantity').value),
-    status: document.getElementById('f-status').value,
-    notes: document.getElementById('f-notes').value.trim() || null,
-  };
-  if (!payload.customer_id || !payload.part_id || !payload.quantity) {
-    toast('Please fill in required fields', 'error'); return;
-  }
+  const customer_id = parseInt(document.getElementById('f-customer').value);
+  const status = document.getElementById('f-status').value;
+  const notes = document.getElementById('f-notes').value.trim() || null;
+  const lines = lineData().filter(l => l.part_id);
+
+  if (!customer_id) { toast('Please choose a customer', 'error'); return; }
+  if (!lines.length) { toast('Add at least one part', 'error'); return; }
+  if (lines.some(l => !l.quantity || l.quantity < 1)) { toast('Each part needs a quantity of at least 1', 'error'); return; }
+
   try {
-    if (id) { await api.updateOrder(id, payload); toast('Order updated', 'success'); }
-    else     { await api.createOrder(payload);    toast('Order created', 'success'); }
+    if (id) {
+      await api.updateOrder(id, { customer_id, part_id: lines[0].part_id, quantity: lines[0].quantity, status, notes });
+      toast('Order updated', 'success');
+    } else {
+      // One shared receipt id so the parts show as a single purchase
+      const group_ref = 'G' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      for (const l of lines) {
+        await api.createOrder({ customer_id, part_id: l.part_id, quantity: l.quantity, status, notes, group_ref });
+      }
+      toast(lines.length === 1 ? 'Order created' : `Purchase of ${lines.length} parts registered`, 'success');
+    }
     loadDropdowns();
-loadOrders();
+    loadOrders();
     closeModal();
   } catch (err) { toast(err.message, 'error'); }
 });

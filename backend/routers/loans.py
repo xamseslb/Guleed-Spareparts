@@ -124,6 +124,7 @@ def create_loan(
         loan_date=data.loan_date or datetime.now(timezone.utc),
         expected_return_date=data.expected_return_date,  # used as the expected payment date
         notes=data.notes,
+        group_ref=data.group_ref,
         status="unpaid",
     )
     db.add(loan)

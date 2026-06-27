@@ -46,6 +46,9 @@ class Loan(Base):
     # Optional internal notes
     notes          = Column(Text, nullable=True)
 
+    # Shared id when several parts are sold/loaned together (one "receipt")
+    group_ref      = Column(String(40), nullable=True, index=True)
+
     # Timestamps
     created_at     = Column(DateTime(timezone=True), server_default=func.now())
     updated_at     = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())

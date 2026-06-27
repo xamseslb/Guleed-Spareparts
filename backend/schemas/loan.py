@@ -20,6 +20,7 @@ class LoanCreate(BaseModel):
     loan_date: Optional[datetime] = None              # defaults to now if not provided
     expected_return_date: Optional[datetime] = None   # when it should come back
     notes: Optional[str] = None
+    group_ref: Optional[str] = None                   # shared id for multi-item sales
 
 
 class LoanUpdate(BaseModel):
@@ -47,6 +48,7 @@ class LoanOut(BaseModel):
     returned_date: Optional[datetime]
     status: str
     notes: Optional[str]
+    group_ref: Optional[str] = None
     created_at: datetime
 
     # Joined fields populated by the router (names instead of just IDs)

@@ -170,61 +170,36 @@
       <form id="loan-form" novalidate>
         <input type="hidden" id="loan-id">
         <div class="form-grid">
-
-          <!-- Customer select -->
           <div class="form-group">
             <label class="form-label" for="f-customer">Customer *</label>
             <select id="f-customer" class="form-select" required>
               <option value="">Select customer…</option>
             </select>
           </div>
-
-          <!-- Part select -->
           <div class="form-group">
-            <label class="form-label" for="f-part">Part *</label>
-            <select id="f-part" class="form-select" required>
-              <option value="">Select part…</option>
-            </select>
-          </div>
-
-          <!-- Quantity -->
-          <div class="form-group">
-            <label class="form-label" for="f-quantity">Quantity *</label>
-            <input id="f-quantity" type="number" class="form-input" min="1" value="1" required>
-          </div>
-
-          <!-- Price per item -->
-          <div class="form-group">
-            <label class="form-label" for="f-price">Loan price per item (NOK)</label>
-            <input id="f-price" type="number" class="form-input" min="0" step="0.01" value="0" placeholder="0 = free loan">
-          </div>
-
-          <!-- Employee present -->
-          <div class="form-group span2">
             <label class="form-label" for="f-employee">Employee present *</label>
             <select id="f-employee" class="form-select" required>
               <option value="">Select employee…</option>
             </select>
           </div>
-
-          <!-- Loan date -->
           <div class="form-group">
-            <label class="form-label" for="f-loan-date">Loan date</label>
+            <label class="form-label" for="f-loan-date">Sale date</label>
             <input id="f-loan-date" type="datetime-local" class="form-input">
           </div>
-
-          <!-- Expected payment date -->
           <div class="form-group">
             <label class="form-label" for="f-return-date">Expected payment date</label>
             <input id="f-return-date" type="datetime-local" class="form-input">
           </div>
+        </div>
 
-          <!-- Notes -->
-          <div class="form-group span2">
-            <label class="form-label" for="f-notes">Notes</label>
-            <textarea id="f-notes" class="form-textarea" placeholder="Any relevant info about this loan…"></textarea>
-          </div>
+        <div class="section-divider" style="margin-top:14px;">Parts in this sale</div>
+        <div id="loan-lines"></div>
+        <button type="button" class="btn btn-secondary" id="add-line-btn" style="margin-top:4px;padding:6px 12px;font-size:12px;">+ Add another part</button>
+        <div id="loan-total" style="text-align:right;font-weight:650;font-size:15px;margin-top:12px;color:var(--text-primary);"></div>
 
+        <div class="form-group" style="margin-top:12px;">
+          <label class="form-label" for="f-notes">Notes</label>
+          <textarea id="f-notes" class="form-textarea" placeholder="Any relevant info…"></textarea>
         </div>
       </form>
     </div>
@@ -274,6 +249,55 @@ function fmtDate(dt) {
   return new Date(dt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+let partsData = [];
+let partOptionsHTML = '<option value="">Select part…</option>';
+
+// ── Cart lines: sell several parts in one credit sale ─────────────────
+function unitPrice(partId) {
+  const p = partsData.find(x => String(x.id) === String(partId));
+  return p ? (p.unit_price || 0) : 0;
+}
+function lineData() {
+  return [...document.querySelectorAll('#loan-lines .order-line')].map(r => ({
+    part_id: parseInt(r.querySelector('.line-part').value) || 0,
+    quantity: parseInt(r.querySelector('.line-qty').value) || 0,
+  }));
+}
+function updateTotal() {
+  const total = lineData().reduce((s, l) => s + (l.part_id ? unitPrice(l.part_id) * (l.quantity || 0) : 0), 0);
+  document.getElementById('loan-total').textContent = total > 0 ? `Total: ${total.toLocaleString('no-NO')} kr` : '';
+}
+function addLine(partId = '', qty = 1) {
+  const wrap = document.getElementById('loan-lines');
+  const row = document.createElement('div');
+  row.className = 'order-line';
+  row.style.cssText = 'display:flex;gap:8px;align-items:flex-end;margin-bottom:8px;';
+  row.innerHTML = `
+    <div class="form-group" style="flex:1;min-width:0;">
+      <label class="form-label">Part *</label>
+      <select class="form-select line-part">${partOptionsHTML}</select>
+    </div>
+    <div class="form-group" style="width:84px;">
+      <label class="form-label">Qty</label>
+      <input type="number" class="form-input line-qty" min="1" value="${qty}">
+    </div>
+    <button type="button" class="btn-icon danger line-remove" title="Remove" style="margin-bottom:1px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>`;
+  wrap.appendChild(row);
+  row.querySelector('.line-part').value = partId;
+  row.querySelector('.line-part').addEventListener('change', updateTotal);
+  row.querySelector('.line-qty').addEventListener('input', updateTotal);
+  row.querySelector('.line-remove').addEventListener('click', () => {
+    if (wrap.querySelectorAll('.order-line').length > 1) { row.remove(); updateTotal(); }
+  });
+  updateTotal();
+}
+function resetLines(lines) {
+  document.getElementById('loan-lines').innerHTML = '';
+  (lines && lines.length ? lines : [{ part_id: '', quantity: 1 }]).forEach(l => addLine(l.part_id, l.quantity));
+}
+
 // ── Load dropdown options (customers, parts, employees) ───────────────
 async function loadDropdowns() {
   try {
@@ -290,15 +314,12 @@ async function loadDropdowns() {
       custSel.appendChild(o);
     });
 
-    const partSel = document.getElementById('f-part');
-    parts.forEach(p => {
-      const avail = p.stock_quantity - p.loaned_quantity;
-      const o = document.createElement('option');
-      o.value = p.id;
-      o.textContent = `${p.part_number} – ${p.name} (${avail} available)`;
-      if (avail <= 0) o.disabled = true;
-      partSel.appendChild(o);
-    });
+    partsData = parts || [];
+    partOptionsHTML = '<option value="">Select part…</option>' +
+      partsData.map(p => {
+        const avail = p.stock_quantity - p.loaned_quantity;
+        return `<option value="${p.id}"${avail <= 0 ? ' disabled' : ''}>${p.part_number} – ${p.name} (${avail} available)</option>`;
+      }).join('');
 
     const empSel = document.getElementById('f-employee');
     employees.forEach(e => {
@@ -396,7 +417,7 @@ function renderTable(loans) {
 
     return `
     <tr>
-      <td class="cell-part-number">#${l.id}</td>
+      <td class="cell-part-number">#${l.id}${l.group_ref ? `<div style="font-size:10px;color:var(--text-muted);font-weight:400;" title="Same sale">🧾 ${l.group_ref.slice(0, 7)}</div>` : ''}</td>
       <td>
         <div style="display:flex;align-items:center;gap:8px;">
           <div style="width:26px;height:26px;border-radius:50%;background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--accent);flex-shrink:0;">
@@ -448,47 +469,48 @@ function closeModal() {
 }
 
 document.getElementById('add-loan-btn').addEventListener('click', () => {
-  // Default loan date to now
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   document.getElementById('f-loan-date').value = now.toISOString().slice(0, 16);
+  document.getElementById('f-return-date').value = '';
+  document.getElementById('f-customer').value = '';
+  document.getElementById('f-employee').value = '';
+  document.getElementById('f-notes').value = '';
+  resetLines([]);
   openModal();
 });
+document.getElementById('add-line-btn').addEventListener('click', () => addLine());
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal-cancel').addEventListener('click', closeModal);
 modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
 
 // ── Save loan ─────────────────────────────────────────────────────────
 document.getElementById('modal-save').addEventListener('click', async () => {
-  const id = document.getElementById('loan-id').value;
   const customer_id = parseInt(document.getElementById('f-customer').value);
-  const part_id     = parseInt(document.getElementById('f-part').value);
-  const quantity    = parseInt(document.getElementById('f-quantity').value);
-  const loan_price  = parseFloat(document.getElementById('f-price').value) || 0;
   const employee_name = document.getElementById('f-employee').value;
   const loanDateVal = document.getElementById('f-loan-date').value;
   const retDateVal  = document.getElementById('f-return-date').value;
+  const notes = document.getElementById('f-notes').value.trim() || null;
+  const lines = lineData().filter(l => l.part_id);
 
-  if (!customer_id || !part_id || !quantity || !employee_name) {
-    toast('Please fill in all required fields (customer, part, quantity, employee)', 'error');
-    return;
-  }
+  if (!customer_id || !employee_name) { toast('Choose a customer and the employee present', 'error'); return; }
+  if (!lines.length) { toast('Add at least one part', 'error'); return; }
+  if (lines.some(l => !l.quantity || l.quantity < 1)) { toast('Each part needs a quantity of at least 1', 'error'); return; }
 
-  const payload = {
-    customer_id, part_id, quantity, loan_price, employee_name,
-    loan_date: loanDateVal ? new Date(loanDateVal).toISOString() : null,
-    expected_return_date: retDateVal ? new Date(retDateVal).toISOString() : null,
-    notes: document.getElementById('f-notes').value.trim() || null,
-  };
+  const loan_date = loanDateVal ? new Date(loanDateVal).toISOString() : null;
+  const expected_return_date = retDateVal ? new Date(retDateVal).toISOString() : null;
+  // One shared receipt id so the parts show as a single sale
+  const group_ref = 'G' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
   try {
-    if (id) {
-      await api.updateLoan(id, payload);
-      toast('Loan updated', 'success');
-    } else {
-      await api.createLoan(payload);
-      toast('Loan registered successfully', 'success');
+    for (const l of lines) {
+      await api.createLoan({
+        customer_id, part_id: l.part_id, quantity: l.quantity,
+        loan_price: unitPrice(l.part_id), employee_name,
+        loan_date, expected_return_date, notes, group_ref,
+      });
     }
+    toast(lines.length === 1 ? 'Credit sale registered' : `Sale of ${lines.length} parts registered`, 'success');
     closeModal();
     loadLoans();
   } catch (err) {

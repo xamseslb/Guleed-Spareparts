@@ -12,6 +12,7 @@ class OrderCreate(BaseModel):
     unit_price_at_order: Optional[float] = Field(None, gt=0)
     status: OrderStatus = OrderStatus.NY
     notes: Optional[str] = None
+    group_ref: Optional[str] = None   # shared id when several parts are bought together
 
 
 class OrderUpdate(BaseModel):
@@ -32,6 +33,7 @@ class OrderOut(BaseModel):
     total_price: float         # computed: unit_price_at_order × quantity
     status: OrderStatus
     notes: Optional[str]
+    group_ref: Optional[str] = None
     order_date: datetime
     updated_at: Optional[datetime]
     customer_name: Optional[str] = None

@@ -23,6 +23,7 @@ class Order(Base):
     unit_price_at_order = Column(Float, nullable=False)
     status = Column(Enum(OrderStatus), default=OrderStatus.NY, nullable=False)
     notes = Column(String(500), nullable=True)
+    group_ref = Column(String(40), nullable=True, index=True)  # shared id for multi-item purchases
     order_date = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
 

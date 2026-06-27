@@ -136,6 +136,17 @@ def test_cannot_delete_part_with_linked_order(client, auth_headers):
     assert "Cannot delete part" in r.json()["detail"]
 
 
+def test_order_stores_group_ref(client, auth_headers):
+    part = _create_part(client, auth_headers, part_number="GRP-1")
+    r = client.post(
+        "/api/orders/",
+        json={"customer_id": 1, "part_id": part["id"], "quantity": 1, "group_ref": "G-abc123"},
+        headers=auth_headers,
+    )
+    assert r.status_code == 201
+    assert r.json()["group_ref"] == "G-abc123"
+
+
 def test_create_order_unknown_part_returns_404(client, auth_headers):
     r = client.post(
         "/api/orders/",
