@@ -218,28 +218,38 @@ async function loadAll() {
       }
     });
 
-    // ── Category doughnut ────────────────────────────────────────────
+    // ── Category bar chart (stock value, highest first) ──────────────
     if (cats.length) {
+      const sorted = [...cats].sort((a, b) => b.total_stock_value - a.total_stock_value);
       new Chart(document.getElementById('cat-chart'), {
-        type: 'doughnut',
+        type: 'bar',
         data: {
-          labels: cats.map(c => c.category),
+          labels: sorted.map(c => c.category),
           datasets: [{
-            data: cats.map(c => c.total_stock_value),
-            backgroundColor: BLUES.slice(0, cats.length),
-            borderWidth: 0,
+            data: sorted.map(c => c.total_stock_value),
+            backgroundColor: BLUE,
+            borderRadius: 4,
+            maxBarThickness: 34,
           }]
         },
         options: {
+          indexAxis: 'y',          // horizontal bars
           responsive: true,
-          cutout: '65%',
           plugins: {
-            legend: { position: 'right', labels: { usePointStyle: true, pointStyleWidth: 8, padding: 14 } },
+            legend: { display: false },
             tooltip: {
               callbacks: {
-                label: ctx => ` $${ctx.parsed.toLocaleString('en-US')}`
+                label: ctx => ` $${ctx.parsed.x.toLocaleString('en-US')}`
               }
             }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              grid: { color: '#f2f3f5' },
+              ticks: { callback: v => '$' + v.toLocaleString('en-US') }
+            },
+            y: { grid: { display: false } }
           }
         }
       });
