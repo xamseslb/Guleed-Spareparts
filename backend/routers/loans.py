@@ -23,7 +23,7 @@ from backend.models.part import Part
 from backend.models.customer import Customer
 from backend.schemas.loan import LoanCreate, LoanUpdate, LoanOut
 from backend.services.auth_service import get_current_user
-from backend.models.user import User
+from backend.models.user import User, UserRole
 
 router = APIRouter(prefix="/api/loans", tags=["Loans"])
 
@@ -194,6 +194,10 @@ def delete_loan(
     loan = db.query(Loan).filter(Loan.id == loan_id).first()
     if not loan:
         raise HTTPException(status_code=404, detail="Loan not found")
+
+    # Only admins may delete
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can delete records")
 
     # If still unpaid (not yet a finalized sale), release the reserved quantity back
     if loan.status in ("unpaid", "overdue"):

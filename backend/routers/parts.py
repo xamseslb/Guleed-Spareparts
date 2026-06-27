@@ -15,7 +15,7 @@ from backend.models.order import Order
 from backend.models.loan import Loan
 from backend.schemas.part import PartCreate, PartUpdate, PartOut
 from backend.services.auth_service import get_current_user
-from backend.models.user import User
+from backend.models.user import User, UserRole
 
 router = APIRouter(prefix="/api/parts", tags=["Parts"])
 
@@ -119,6 +119,8 @@ def update_part(
 # ─── Slett vare ───────────────────────────────────────────────────────
 @router.delete("/{part_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_part(part_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can delete parts")
     part = db.query(Part).filter(Part.id == part_id).first()
     if not part:
         raise HTTPException(status_code=404, detail="Part not found")

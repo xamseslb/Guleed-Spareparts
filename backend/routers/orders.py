@@ -6,7 +6,7 @@ from backend.models.order import Order, OrderStatus
 from backend.models.part import Part
 from backend.schemas.order import OrderCreate, OrderUpdate, OrderOut
 from backend.services.auth_service import get_current_user
-from backend.models.user import User
+from backend.models.user import User, UserRole
 
 router = APIRouter(prefix="/api/orders", tags=["Orders"])
 
@@ -126,6 +126,8 @@ def update_order(
 
 @router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_order(order_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can delete orders")
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")

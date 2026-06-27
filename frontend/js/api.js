@@ -312,6 +312,11 @@ export const api = {
     return request('PUT', `/api/auth/users/${id}`, data);
   },
 
+  // ─── Activity log (admin only) ───────────────────────────────────
+  async getActivity(limit = 300) {
+    return request('GET', `/api/activity/?limit=${limit}`);
+  },
+
   // How many offline changes are waiting to sync (for the UI)
   pendingSyncCount() {
     return getQueue().length;

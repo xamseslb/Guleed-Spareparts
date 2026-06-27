@@ -16,7 +16,7 @@ from backend.models.order import Order
 from backend.models.loan import Loan
 from backend.schemas.customer import CustomerCreate, CustomerUpdate, CustomerOut
 from backend.services.auth_service import get_current_user
-from backend.models.user import User
+from backend.models.user import User, UserRole
 
 # Create a router with the prefix /api/customers
 # All routes in this file will start with /api/customers/...
@@ -99,6 +99,10 @@ def delete_customer(
     c = db.query(Customer).filter(Customer.id == customer_id).first()
     if not c:
         raise HTTPException(status_code=404, detail="Customer not found")
+
+    # Only admins may delete
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can delete customers")
 
     # Don't orphan order/loan history – block deletion if the customer is referenced
     order_count = db.query(Order).filter(Order.customer_id == customer_id).count()

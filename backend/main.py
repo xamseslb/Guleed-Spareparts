@@ -21,10 +21,11 @@ from backend.database import engine
 # Import models so SQLAlchemy knows about the tables – even if not used directly here
 from backend.models import Part, Order, Customer, User  # noqa: F401
 from backend.database import Base
-from backend.routers import auth, parts, orders, customers, analytics
+from backend.routers import auth, parts, orders, customers, analytics, activity
 from backend.routers import loans as loans_router
 from backend.seed import seed, ensure_admin
 from backend.config import ALLOWED_ORIGINS, SEED_ON_STARTUP, IS_PRODUCTION
+from backend.services.audit import record_activity
 
 # Step 1: Database schema.
 # In production the schema is managed by Alembic migrations – run
@@ -65,6 +66,27 @@ app.add_middleware(
     allow_headers=["*"],             # allow all headers (including Authorization)
 )
 
+
+# Audit trail: record every successful data change (who + when + what)
+@app.middleware("http")
+async def audit_log_middleware(request, call_next):
+    response = await call_next(request)
+    try:
+        path = request.url.path
+        if (
+            request.method in ("POST", "PUT", "DELETE", "PATCH")
+            and path.startswith("/api/")
+            and path != "/api/auth/login"          # don't log logins
+            and response.status_code < 400          # only successful changes
+        ):
+            record_activity(
+                request.headers.get("authorization", ""),
+                request.method, path, response.status_code,
+            )
+    except Exception:
+        pass
+    return response
+
 # Step 5: Serve uploaded images as static files
 # When you upload a part image, it's saved in the 'uploads/' folder
 # This makes those files accessible at: http://localhost:8000/uploads/filename.jpg
@@ -87,6 +109,7 @@ app.include_router(orders.router)        # /api/orders/...
 app.include_router(customers.router)     # /api/customers/...
 app.include_router(analytics.router)     # /api/analytics/...
 app.include_router(loans_router.router)  # /api/loans/...
+app.include_router(activity.router)      # /api/activity/...
 
 
 # Visiting the bare domain sends people straight to the app's login page
