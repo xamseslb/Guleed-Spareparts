@@ -5,7 +5,8 @@ from backend.models.order import OrderStatus
 
 
 class OrderCreate(BaseModel):
-    customer_id: int
+    customer_id: Optional[int] = None      # optional: existing customer
+    customer_name: Optional[str] = None    # optional: typed name for a walk-in
     part_id: int
     quantity: int = Field(1, ge=1)
     # Optional: if omitted, the backend snapshots the part's current unit price.
@@ -25,7 +26,7 @@ class OrderOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    customer_id: int
+    customer_id: Optional[int] = None
     part_id: int
     quantity: int
     unit_price_at_order: float

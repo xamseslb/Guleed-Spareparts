@@ -17,7 +17,10 @@ class Order(Base):
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, index=True)
-    customer_id = Column(Integer, ForeignKey("customers.id"), nullable=False)
+    # Customer is optional on orders: link an existing customer, store a typed
+    # name for a walk-in, or leave both empty for an anonymous quick sale.
+    customer_id = Column(Integer, ForeignKey("customers.id"), nullable=True)
+    customer_name = Column(String(200), nullable=True)
     part_id = Column(Integer, ForeignKey("parts.id"), nullable=False)
     quantity = Column(Integer, nullable=False, default=1)
     unit_price_at_order = Column(Float, nullable=False)

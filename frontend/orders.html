@@ -155,10 +155,9 @@
         <input type="hidden" id="order-id">
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label" for="f-customer">Customer *</label>
-            <select id="f-customer" class="form-select" required>
-              <option value="">Select customer…</option>
-            </select>
+            <label class="form-label" for="f-customer">Customer (optional)</label>
+            <input id="f-customer" class="form-input" list="customers-list" autocomplete="off" placeholder="Pick, type a name, or leave blank">
+            <datalist id="customers-list"></datalist>
           </div>
           <div class="form-group">
             <label class="form-label" for="f-status">Status</label>
@@ -226,18 +225,16 @@ function statusBadge(s) {
 // Populate the Customer and Part dropdowns from live data
 let partsData = [];
 let partOptionsHTML = '<option value="">Select part…</option>';
+let customersByName = {};   // lowercase name → id, to resolve a typed customer
 
 async function loadDropdowns() {
   try {
     const [customers, parts] = await Promise.all([api.getCustomers(), api.getParts()]);
-    const custSel = document.getElementById('f-customer');
-    custSel.innerHTML = '<option value="">Select customer…</option>';
-    (customers || []).forEach(c => {
-      const o = document.createElement('option');
-      o.value = c.id;
-      o.textContent = `${c.name}${c.phone ? ' – ' + c.phone : ''}`;
-      custSel.appendChild(o);
-    });
+    customersByName = {};
+    (customers || []).forEach(c => { customersByName[c.name.trim().toLowerCase()] = c.id; });
+    const dl = document.getElementById('customers-list');
+    if (dl) dl.innerHTML = (customers || [])
+      .map(c => `<option value="${c.name}">${c.phone || ''}</option>`).join('');
     partsData = parts || [];
     partOptionsHTML = '<option value="">Select part…</option>' +
       partsData.map(p => `<option value="${p.id}">${p.part_number} – ${p.name}</option>`).join('');
@@ -356,7 +353,7 @@ function renderTable(orders) {
   tbody.innerHTML = orders.map(o => `
     <tr>
       <td class="cell-part-number">#${o.id}${o.group_ref ? `<div style="font-size:10px;color:var(--text-muted);font-weight:400;" title="Same purchase">🧾 ${o.group_ref.slice(0, 7)}</div>` : ''}</td>
-      <td style="color:var(--text-secondary);font-size:12px;">${o.customer_id}</td>
+      <td style="font-size:13px;">${o.customer_name || '<span style="color:var(--text-muted);">Walk-in</span>'}</td>
       <td style="color:var(--text-secondary);font-size:12px;">${o.part_id}</td>
       <td class="stock-num">${o.quantity}</td>
       <td style="color:var(--text-secondary);">${o.unit_price ? '$' + o.unit_price.toLocaleString('en-US') : '–'}</td>
@@ -413,7 +410,7 @@ window.editOrder = async (id) => {
     editingId = id;
     document.getElementById('order-id').value = id;
     document.getElementById('modal-title').textContent = 'Edit Order';
-    document.getElementById('f-customer').value = o.customer_id;
+    document.getElementById('f-customer').value = o.customer_name || '';
     document.getElementById('f-status').value = o.status;
     document.getElementById('f-notes').value = o.notes || '';
     document.getElementById('add-line-btn').style.display = 'none';   // one part when editing
@@ -434,24 +431,30 @@ loadOrders();
 
 document.getElementById('modal-save').addEventListener('click', async () => {
   const id = document.getElementById('order-id').value;
-  const customer_id = parseInt(document.getElementById('f-customer').value);
+  // Customer is optional: matched name → link it; typed name → store it; empty → anonymous
+  const custVal = document.getElementById('f-customer').value.trim();
+  let customer_id = null, customer_name = null;
+  if (custVal) {
+    const matchId = customersByName[custVal.toLowerCase()];
+    if (matchId) customer_id = matchId;
+    else customer_name = custVal;
+  }
   const status = document.getElementById('f-status').value;
   const notes = document.getElementById('f-notes').value.trim() || null;
   const lines = lineData().filter(l => l.part_id);
 
-  if (!customer_id) { toast('Please choose a customer', 'error'); return; }
   if (!lines.length) { toast('Add at least one part', 'error'); return; }
   if (lines.some(l => !l.quantity || l.quantity < 1)) { toast('Each part needs a quantity of at least 1', 'error'); return; }
 
   try {
     if (id) {
-      await api.updateOrder(id, { customer_id, part_id: lines[0].part_id, quantity: lines[0].quantity, status, notes });
+      await api.updateOrder(id, { customer_id, customer_name, part_id: lines[0].part_id, quantity: lines[0].quantity, status, notes });
       toast('Order updated', 'success');
     } else {
       // One shared receipt id so the parts show as a single purchase
       const group_ref = 'G' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       for (const l of lines) {
-        await api.createOrder({ customer_id, part_id: l.part_id, quantity: l.quantity, status, notes, group_ref });
+        await api.createOrder({ customer_id, customer_name, part_id: l.part_id, quantity: l.quantity, status, notes, group_ref });
       }
       toast(lines.length === 1 ? 'Order created' : `Purchase of ${lines.length} parts registered`, 'success');
     }

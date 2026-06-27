@@ -147,6 +147,26 @@ def test_order_stores_group_ref(client, auth_headers):
     assert r.json()["group_ref"] == "G-abc123"
 
 
+def test_order_without_a_customer(client, auth_headers):
+    part = _create_part(client, auth_headers, part_number="WALK-1")
+    r = client.post("/api/orders/", json={"part_id": part["id"], "quantity": 1}, headers=auth_headers)
+    assert r.status_code == 201, r.text
+    assert r.json()["customer_id"] is None
+    assert r.json()["customer_name"] is None
+
+
+def test_order_with_typed_customer_name(client, auth_headers):
+    part = _create_part(client, auth_headers, part_number="WALK-2")
+    r = client.post(
+        "/api/orders/",
+        json={"part_id": part["id"], "quantity": 1, "customer_name": "Walk-in Bob"},
+        headers=auth_headers,
+    )
+    assert r.status_code == 201
+    assert r.json()["customer_id"] is None
+    assert r.json()["customer_name"] == "Walk-in Bob"
+
+
 def test_create_order_unknown_part_returns_404(client, auth_headers):
     r = client.post(
         "/api/orders/",
