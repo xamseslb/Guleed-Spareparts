@@ -348,6 +348,40 @@ export const api = {
   },
 };
 
+// ─── Mobile navigation: hamburger button + slide-in sidebar ──────────
+// Injected here so every page that loads api.js gets it without editing
+// each HTML file. Only does anything when a sidebar + topbar are present.
+function setupMobileNav() {
+  const sidebar = document.querySelector('.sidebar');
+  const topbar = document.querySelector('.topbar');
+  if (!sidebar || !topbar || document.querySelector('.menu-toggle')) return;
+
+  const btn = document.createElement('button');
+  btn.className = 'menu-toggle';
+  btn.setAttribute('aria-label', 'Open menu');
+  btn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
+  topbar.insertBefore(btn, topbar.firstChild);
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'sidebar-backdrop';
+  document.body.appendChild(backdrop);
+
+  const open = () => { sidebar.classList.add('open'); backdrop.classList.add('show'); btn.setAttribute('aria-label', 'Close menu'); };
+  const close = () => { sidebar.classList.remove('open'); backdrop.classList.remove('show'); btn.setAttribute('aria-label', 'Open menu'); };
+  const toggle = () => sidebar.classList.contains('open') ? close() : open();
+
+  btn.addEventListener('click', toggle);
+  backdrop.addEventListener('click', close);
+  // Tapping a menu link navigates away; close so it doesn't linger over the new page.
+  sidebar.querySelectorAll('.nav-item').forEach(a => a.addEventListener('click', close));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupMobileNav);
+} else {
+  setupMobileNav();
+}
+
 // ─── Offline wiring: service worker + auto-sync + status ─────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));

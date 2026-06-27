@@ -70,7 +70,33 @@ input, select, textarea { font-family: var(--font); }
   top: 0; left: 0;
   height: 100vh;
   z-index: 100;
+  transition: transform .25s ease;
 }
+
+/* Hamburger button – only shown on small screens (see media query). */
+.menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px; height: 38px;
+  margin-right: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.menu-toggle:hover { background: var(--bg); }
+
+/* Dimmed backdrop behind the open sidebar on mobile. */
+.sidebar-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 90;
+}
+.sidebar-backdrop.show { display: block; }
 
 .sidebar-logo {
   display: flex;
@@ -675,7 +701,9 @@ input, select, textarea { font-family: var(--font); }
 }
 @media (max-width: 640px) {
   :root { --sidebar-w: 0px; }
-  .sidebar { transform: translateX(-216px); width: 216px; }
+  .sidebar { transform: translateX(-216px); width: 216px; box-shadow: 2px 0 16px rgba(0,0,0,.15); }
+  .sidebar.open { transform: translateX(0); }
   .main-content { margin-left: 0; }
+  .menu-toggle { display: inline-flex; }   /* show the hamburger on phones */
   .form-grid { grid-template-columns: 1fr; }
 }
