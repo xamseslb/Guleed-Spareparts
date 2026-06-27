@@ -210,6 +210,29 @@
   </div>
 </div>
 
+<!-- Small dedicated dialog for adjusting the price of an unpaid credit sale -->
+<div class="modal-overlay" id="price-modal" role="dialog" aria-modal="true" aria-labelledby="price-modal-title">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-header">
+      <h2 id="price-modal-title">Edit price</h2>
+      <button class="btn-icon" id="price-modal-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label" for="f-price">Price per item (USD)</label>
+        <input id="f-price" type="number" min="0" step="0.01" class="form-input">
+        <small style="color:var(--text-secondary);font-size:11px;">Adjust if the dollar rate has changed.</small>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="price-modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="price-modal-save">Save price</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
 <script type="module">
@@ -501,14 +524,25 @@ window.deleteGroup = async (key) => {
   try { for (const l of items) await api.deleteLoan(l.id); toast('Sale deleted', 'success'); loadLoans(); }
   catch (err) { toast(err.message, 'error'); }
 };
-window.editLoanPrice = async (id, current) => {
-  const v = prompt('New price per item (USD):', current);
-  if (v === null) return;
-  const price = parseFloat(v);
-  if (!(price >= 0)) { toast('Enter a valid price', 'error'); return; }
-  try { await api.updateLoan(id, { loan_price: price }); toast('Price updated', 'success'); loadLoans(); }
-  catch (err) { toast(err.message, 'error'); }
+// ── Edit-price dialog (for an unpaid credit sale) ──────────────────────
+const priceModal = document.getElementById('price-modal');
+let priceEditId = null;
+window.editLoanPrice = (id, current) => {
+  priceEditId = id;
+  document.getElementById('f-price').value = current;
+  priceModal.classList.add('open');
+  document.getElementById('f-price').focus();
 };
+function closePriceModal() { priceModal.classList.remove('open'); priceEditId = null; }
+document.getElementById('price-modal-close').addEventListener('click', closePriceModal);
+document.getElementById('price-modal-cancel').addEventListener('click', closePriceModal);
+priceModal.addEventListener('click', e => { if (e.target === priceModal) closePriceModal(); });
+document.getElementById('price-modal-save').addEventListener('click', async () => {
+  const price = parseFloat(document.getElementById('f-price').value);
+  if (!(price >= 0)) { toast('Enter a valid price', 'error'); return; }
+  try { await api.updateLoan(priceEditId, { loan_price: price }); toast('Price updated', 'success'); closePriceModal(); loadLoans(); }
+  catch (err) { toast(err.message, 'error'); }
+});
 
 // ── Modal ─────────────────────────────────────────────────────────────
 const modal = document.getElementById('loan-modal');
