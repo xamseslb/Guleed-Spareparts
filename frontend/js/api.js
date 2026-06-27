@@ -206,6 +206,12 @@ export const api = {
     return request('DELETE', `/api/parts/${partId}/images/${imageIndex}`);
   },
 
+  async importParts(file) {
+    const fd = new FormData();
+    fd.append('file', file);
+    return request('POST', '/api/parts/import', fd, true);
+  },
+
   // ─── Orders ─────────────────────────────────────────────────────
   async getOrder(id) {
     return request('GET', `/api/orders/${id}`);

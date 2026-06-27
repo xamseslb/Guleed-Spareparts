@@ -78,6 +78,10 @@
     <header class="topbar">
       <h1 class="topbar-title">Parts</h1>
       <div class="topbar-actions">
+        <button class="btn btn-secondary admin-only" id="import-parts-btn" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Import
+        </button>
         <button class="btn btn-primary" id="add-part-btn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Add part
@@ -392,6 +396,38 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
       <button class="btn btn-primary" id="modal-save">Save part</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Import parts from Excel/CSV ─────────────────────────────── -->
+<div class="modal-overlay" id="import-modal" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:540px;">
+    <div class="modal-header">
+      <h2>Import parts from Excel / CSV</h2>
+      <button class="btn-icon" id="import-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-secondary);">
+        Upload an <b>.xlsx</b> or <b>.csv</b> file with one row per part.
+        Required columns: <b>part number</b>, <b>name</b>, <b>category</b>, <b>price</b>.
+        Optional: description, stock, low stock threshold, location, ordered. Existing part
+        numbers are skipped (no duplicates).
+      </p>
+      <button type="button" class="btn btn-secondary" id="download-template" style="margin:6px 0 14px;">
+        Download template (CSV)
+      </button>
+      <div class="form-group">
+        <label class="form-label" for="import-file">Choose file</label>
+        <input type="file" id="import-file" accept=".xlsx,.csv" class="form-input" style="padding:7px;">
+      </div>
+      <div id="import-result" style="margin-top:12px;font-size:13px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="import-cancel">Close</button>
+      <button class="btn btn-primary" id="import-run">Import</button>
     </div>
   </div>
 </div>

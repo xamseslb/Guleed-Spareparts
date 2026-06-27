@@ -211,3 +211,119 @@ def delete_image(
     db.commit()
     db.refresh(part)
     return part
+
+
+# ─── Bulk import from Excel / CSV ─────────────────────────────────────
+# Accepts flexible column names (English or Norwegian). Required columns:
+# part number, name, category, price. Everything else is optional.
+COLUMN_ALIASES = {
+    "part_number": ["part_number", "part number", "part no", "part no.", "partno", "varenummer", "varenr", "vare nr", "sku", "artikkelnr"],
+    "name": ["name", "part name", "navn", "varenavn", "produktnavn"],
+    "category": ["category", "kategori"],
+    "unit_price": ["unit_price", "price", "price (nok)", "pris", "unit price", "salgspris"],
+    "description": ["description", "beskrivelse", "desc"],
+    "stock_quantity": ["stock_quantity", "stock", "stock quantity", "antall", "lager", "quantity", "antall pa lager", "antall på lager"],
+    "low_stock_threshold": ["low_stock_threshold", "threshold", "low stock threshold", "lavt lager", "min", "minimum"],
+    "location": ["location", "storage location", "lokasjon", "hylle", "plassering", "hylleplass"],
+    "ordered_quantity": ["ordered_quantity", "ordered", "ordered quantity", "bestilt", "i bestilling"],
+}
+
+
+def _opt_str(v):
+    if v is None:
+        return None
+    s = str(v).strip()
+    return None if s == "" or s.lower() == "nan" else s
+
+
+def _opt_int(v, default):
+    try:
+        if v is None or str(v).strip().lower() in ("", "nan"):
+            return default
+        return int(float(v))
+    except (ValueError, TypeError):
+        return default
+
+
+@router.post("/import")
+async def import_parts(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can import parts")
+
+    import io
+    import pandas as pd
+
+    content = await file.read()
+    fname = (file.filename or "").lower()
+    try:
+        if fname.endswith(".csv"):
+            df = pd.read_csv(io.BytesIO(content))
+        else:
+            df = pd.read_excel(io.BytesIO(content))
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Could not read the file: {exc}")
+
+    # Map the user's column headers onto our field names
+    rename = {}
+    for col in df.columns:
+        key = str(col).strip().lower()
+        for field, aliases in COLUMN_ALIASES.items():
+            if key in aliases:
+                rename[col] = field
+                break
+    df = df.rename(columns=rename)
+
+    required = ["part_number", "name", "category", "unit_price"]
+    missing = [c for c in required if c not in df.columns]
+    if missing:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Missing required column(s): {', '.join(missing)}. "
+                   "The file needs columns for part number, name, category and price.",
+        )
+
+    existing = {r[0] for r in db.query(Part.part_number).all()}
+    created, skipped, errors, seen = 0, 0, [], set()
+
+    for i, row in df.iterrows():
+        rownum = int(i) + 2  # +1 for header, +1 for 1-based
+        try:
+            pn = _opt_str(row.get("part_number"))
+            name = _opt_str(row.get("name"))
+            category = _opt_str(row.get("category"))
+            if not pn:
+                errors.append({"row": rownum, "reason": "missing part number"}); continue
+            if not name or not category:
+                errors.append({"row": rownum, "reason": "missing name or category"}); continue
+            if pn in existing or pn in seen:
+                skipped += 1; continue
+            try:
+                price = float(row.get("unit_price"))
+            except (ValueError, TypeError):
+                errors.append({"row": rownum, "reason": "invalid price"}); continue
+
+            db.add(Part(
+                part_number=pn, name=name, category=category, unit_price=price,
+                description=_opt_str(row.get("description")),
+                location=_opt_str(row.get("location")),
+                stock_quantity=_opt_int(row.get("stock_quantity"), 0),
+                ordered_quantity=_opt_int(row.get("ordered_quantity"), 0),
+                low_stock_threshold=_opt_int(row.get("low_stock_threshold"), 5),
+                compatible_cars=[], images=[],
+            ))
+            seen.add(pn)
+            created += 1
+        except Exception as exc:
+            errors.append({"row": rownum, "reason": str(exc)})
+
+    db.commit()
+    return {
+        "created": created,
+        "skipped_duplicates": skipped,
+        "error_count": len(errors),
+        "errors": errors[:50],
+    }

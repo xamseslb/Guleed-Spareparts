@@ -388,6 +388,54 @@ function setupCategoryCombo() {
   input.addEventListener('blur', () => setTimeout(() => { menu.hidden = true; }, 150));
 }
 
+// ─── Excel / CSV import ───────────────────────────────────────────────
+const importModal = document.getElementById('import-modal');
+function closeImport() { importModal && importModal.classList.remove('open'); }
+document.getElementById('import-parts-btn')?.addEventListener('click', () => {
+  document.getElementById('import-result').innerHTML = '';
+  document.getElementById('import-file').value = '';
+  importModal.classList.add('open');
+});
+document.getElementById('import-close')?.addEventListener('click', closeImport);
+document.getElementById('import-cancel')?.addEventListener('click', closeImport);
+importModal?.addEventListener('click', e => { if (e.target === importModal) closeImport(); });
+
+document.getElementById('download-template')?.addEventListener('click', () => {
+  const headers = ['part_number', 'name', 'category', 'unit_price', 'description', 'stock_quantity', 'low_stock_threshold', 'location', 'ordered_quantity'];
+  const example = ['BR-8690', 'Front Brake Pads', 'Brakes', '899', 'Fits Toyota Corolla', '42', '5', 'Shelf B Row 04', '10'];
+  const cell = v => /[",\n]/.test(v) ? `"${v}"` : v;
+  const csv = headers.join(',') + '\n' + example.map(cell).join(',') + '\n';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'parts_template.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+document.getElementById('import-run')?.addEventListener('click', async () => {
+  const file = document.getElementById('import-file').files[0];
+  if (!file) { toast('Choose a file first', 'error'); return; }
+  const btn = document.getElementById('import-run');
+  btn.disabled = true; btn.textContent = 'Importing…';
+  try {
+    const res = await api.importParts(file);
+    let html = `<div style="color:var(--green);font-weight:600;">✓ ${res.created} part(s) imported</div>`;
+    if (res.skipped_duplicates) html += `<div style="color:var(--text-muted);">${res.skipped_duplicates} skipped (already existed)</div>`;
+    if (res.error_count) {
+      html += `<div style="color:var(--red);margin-top:4px;">${res.error_count} row(s) had errors:</div>`;
+      html += '<ul style="margin:4px 0 0 16px;color:var(--text-secondary);">' +
+        res.errors.map(e => `<li>Row ${e.row}: ${e.reason}</li>`).join('') + '</ul>';
+    }
+    document.getElementById('import-result').innerHTML = html;
+    if (res.created) { toast(`${res.created} parts imported`, 'success'); loadParts(); loadCategoryPanel(true); }
+  } catch (err) {
+    document.getElementById('import-result').innerHTML = `<div style="color:var(--red);">${err.message}</div>`;
+    toast(err.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Import';
+  }
+});
+
 // ─── Init ────────────────────────────────────────────────────────────
 loadParts();
 loadSummary();
