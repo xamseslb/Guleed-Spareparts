@@ -116,8 +116,10 @@
         <!-- Category breakdown -->
         <div class="chart-card">
           <div class="chart-title">Category Breakdown</div>
-          <div class="chart-sub">Stock value by category</div>
-          <canvas id="cat-chart" height="200"></canvas>
+          <div class="chart-sub">Stock value by category · top 10</div>
+          <div id="cat-chart-wrap" style="position:relative;height:200px;">
+            <canvas id="cat-chart"></canvas>
+          </div>
         </div>
 
         <!-- Category table -->
@@ -221,20 +223,32 @@ async function loadAll() {
     // ── Category bar chart (stock value, highest first) ──────────────
     if (cats.length) {
       const sorted = [...cats].sort((a, b) => b.total_stock_value - a.total_stock_value);
+      // Keep the card readable as categories grow: show the top 10 by value
+      // and fold everything else into a single lighter "Other" bar.
+      const TOP = 10;
+      let rows = sorted;
+      if (sorted.length > TOP) {
+        const other = sorted.slice(TOP).reduce((s, c) => s + c.total_stock_value, 0);
+        rows = [...sorted.slice(0, TOP), { category: 'Other', total_stock_value: other }];
+      }
+      // Grow the chart's height with the number of bars so they never get squashed.
+      document.getElementById('cat-chart-wrap').style.height = Math.max(160, rows.length * 38 + 48) + 'px';
+
       new Chart(document.getElementById('cat-chart'), {
         type: 'bar',
         data: {
-          labels: sorted.map(c => c.category),
+          labels: rows.map(c => c.category),
           datasets: [{
-            data: sorted.map(c => c.total_stock_value),
-            backgroundColor: BLUE,
+            data: rows.map(c => c.total_stock_value),
+            backgroundColor: rows.map(c => c.category === 'Other' ? '#93c5fd' : BLUE),
             borderRadius: 4,
-            maxBarThickness: 34,
+            maxBarThickness: 30,
           }]
         },
         options: {
           indexAxis: 'y',          // horizontal bars
           responsive: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
             tooltip: {
