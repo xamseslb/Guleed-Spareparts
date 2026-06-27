@@ -69,9 +69,43 @@ PORT = find_free_port(8765)
 URL = f"http://127.0.0.1:{PORT}/app/login.html"
 
 
+def run_migrations():
+    """
+    Bring the local database schema up to date with Alembic, so new versions
+    of the app can add columns/tables WITHOUT losing existing data.
+
+    - Fresh database  → migrations create everything.
+    - Existing (migrated) database → only new migrations are applied.
+    - A pre-migration database (made by an older build) is adopted by stamping
+      it to head; brand-new installs never hit that path.
+    """
+    from alembic.config import Config
+    from alembic import command
+    from sqlalchemy import create_engine, inspect
+
+    url = os.environ["DATABASE_URL"]
+    cfg = Config(os.path.join(BASE, "alembic.ini"))
+    cfg.set_main_option("script_location", os.path.join(BASE, "migrations"))
+    cfg.set_main_option("sqlalchemy.url", url)
+
+    engine = create_engine(url)
+    insp = inspect(engine)
+    has_version = insp.has_table("alembic_version")
+    has_data = insp.has_table("parts")
+    engine.dispose()
+
+    try:
+        if has_data and not has_version:
+            command.stamp(cfg, "head")     # adopt a legacy DB into migration control
+        else:
+            command.upgrade(cfg, "head")   # fresh or already-migrated DB
+    except Exception as exc:
+        print(f"[warn] migration step skipped: {exc}")
+
+
 def start_server():
     import uvicorn
-    import backend.main  # importing builds the tables + bootstraps the admin user
+    import backend.main  # importing also bootstraps the admin user
     # uvicorn skips signal handlers when not on the main thread, so this is safe
     uvicorn.run(backend.main.app, host="127.0.0.1", port=PORT, log_level="warning")
 
@@ -90,6 +124,7 @@ def wait_until_up(timeout=25):
 
 def main():
     print(f"Starting Guleed Spareparts…  data: {DATA}")
+    run_migrations()
     threading.Thread(target=start_server, daemon=True).start()
     wait_until_up()
     try:

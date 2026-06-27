@@ -42,8 +42,11 @@ pip install -r requirements-desktop.txt
 
 pyinstaller --noconfirm --onefile --name GuleedSpareparts ^
   --add-data "frontend;frontend" ^
+  --add-data "migrations;migrations" ^
+  --add-data "alembic.ini;." ^
   --collect-all backend ^
   --collect-submodules uvicorn ^
+  --collect-submodules alembic ^
   desktop.py
 ```
 
