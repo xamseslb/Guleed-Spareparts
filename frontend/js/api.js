@@ -224,6 +224,13 @@ export const api = {
     return request('POST', '/api/parts/import', fd, true);
   },
 
+  // Downloads the Excel (.xlsx) import template as a Blob.
+  async importTemplate() {
+    const res = await fetch(`${API_BASE}/api/parts/import-template`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Could not download the template');
+    return res.blob();
+  },
+
   // ─── Orders ─────────────────────────────────────────────────────
   async getOrder(id) {
     return request('GET', `/api/orders/${id}`);

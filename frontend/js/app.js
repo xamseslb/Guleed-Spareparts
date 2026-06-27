@@ -400,16 +400,19 @@ document.getElementById('import-close')?.addEventListener('click', closeImport);
 document.getElementById('import-cancel')?.addEventListener('click', closeImport);
 importModal?.addEventListener('click', e => { if (e.target === importModal) closeImport(); });
 
-document.getElementById('download-template')?.addEventListener('click', () => {
-  const headers = ['part_number', 'name', 'category', 'unit_price', 'description', 'stock_quantity', 'low_stock_threshold', 'location', 'ordered_quantity'];
-  const example = ['BR-8690', 'Front Brake Pads', 'Brakes', '899', 'Fits Toyota Corolla', '42', '5', 'Shelf B Row 04', '10'];
-  const cell = v => /[",\n]/.test(v) ? `"${v}"` : v;
-  const csv = headers.join(',') + '\n' + example.map(cell).join(',') + '\n';
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-  a.download = 'parts_template.csv';
-  a.click();
-  URL.revokeObjectURL(a.href);
+document.getElementById('download-template')?.addEventListener('click', async () => {
+  // A real .xlsx (built on the server) so Excel keeps the columns separate –
+  // a comma CSV collapses into one column on machines that use ';' as the list separator.
+  try {
+    const blob = await api.importTemplate();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'parts_template.xlsx';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch (err) {
+    toast(err.message, 'error');
+  }
 });
 
 document.getElementById('import-run')?.addEventListener('click', async () => {
