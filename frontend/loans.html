@@ -265,7 +265,7 @@ function lineData() {
 }
 function updateTotal() {
   const total = lineData().reduce((s, l) => s + (l.part_id ? unitPrice(l.part_id) * (l.quantity || 0) : 0), 0);
-  document.getElementById('loan-total').textContent = total > 0 ? `Total: ${total.toLocaleString('no-NO')} kr` : '';
+  document.getElementById('loan-total').textContent = total > 0 ? `Total: $${total.toLocaleString('en-US')}` : '';
 }
 function addLine(partId = '', qty = 1) {
   const wrap = document.getElementById('loan-lines');
@@ -349,7 +349,7 @@ async function loadLoans() {
     document.getElementById('stat-overdue').textContent = overdue;
     document.getElementById('stat-returned').textContent = returned;
     document.getElementById('stat-value').textContent =
-      totalVal.toLocaleString('no-NO', { style: 'currency', currency: 'NOK', maximumFractionDigits: 0 });
+      totalVal.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
     renderStatusPanel();
   } catch (err) {
     toast('Failed to load loans: ' + err.message, 'error');
@@ -431,8 +431,8 @@ function renderTable(loans) {
         <div class="cell-desc">${l.part_number || ''}</div>
       </td>
       <td class="stock-num">${l.quantity}</td>
-      <td class="date-cell">${l.loan_price.toLocaleString('no-NO')} kr</td>
-      <td><span class="stock-num">${l.total_price.toLocaleString('no-NO')} kr</span></td>
+      <td class="date-cell">$${l.loan_price.toLocaleString('en-US')}</td>
+      <td><span class="stock-num">$${l.total_price.toLocaleString('en-US')}</span></td>
       <td>
         <span class="employee-chip">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>

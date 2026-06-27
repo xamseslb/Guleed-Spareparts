@@ -50,7 +50,7 @@ async function loadSummary() {
     document.getElementById('stat-loan').textContent = s.total_on_loan ?? '–';
     const val = s.total_stock_value_nok;
     document.getElementById('stat-value').textContent = val
-      ? val.toLocaleString('no-NO', { style: 'currency', currency: 'NOK', maximumFractionDigits: 0 })
+      ? val.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
       : '–';
   } catch { /* ignorer */ }
 }
@@ -91,7 +91,7 @@ function renderTable(parts) {
       <td>${stockBadge(p)}</td>
       <td class="stock-secondary">${p.ordered_quantity}</td>
       <td class="stock-secondary">${p.loaned_quantity}</td>
-      <td><span class="stock-num">${(p.unit_price).toLocaleString('no-NO')} kr</span></td>
+      <td><span class="stock-num">$${(p.unit_price).toLocaleString('en-US')}</span></td>
       <td onclick="event.stopPropagation()">
         <div class="cell-actions">
           <button class="btn-icon" onclick="editPart(${p.id})" title="Edit" aria-label="Edit ${p.name}">
@@ -472,7 +472,7 @@ window.openPartAction = async (partId) => {
   // Fill in the header
   document.getElementById('action-part-name').textContent = part.name;
   document.getElementById('action-part-meta').textContent =
-    `${part.part_number} · ${part.category} · ${available} pcs available · ${part.unit_price.toLocaleString('no-NO')} kr`;
+    `${part.part_number} · ${part.category} · ${available} pcs available · $${part.unit_price.toLocaleString('en-US')}`;
 
   // Reset to choose step
   showStep('choose');

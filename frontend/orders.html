@@ -259,7 +259,7 @@ function lineData() {
 }
 function updateTotal() {
   const total = lineData().reduce((s, l) => s + (l.part_id ? unitPrice(l.part_id) * (l.quantity || 0) : 0), 0);
-  document.getElementById('order-total').textContent = total > 0 ? `Total: ${total.toLocaleString('no-NO')} kr` : '';
+  document.getElementById('order-total').textContent = total > 0 ? `Total: $${total.toLocaleString('en-US')}` : '';
 }
 function addLine(partId = '', qty = 1) {
   const wrap = document.getElementById('order-lines');
@@ -359,8 +359,8 @@ function renderTable(orders) {
       <td style="color:var(--text-secondary);font-size:12px;">${o.customer_id}</td>
       <td style="color:var(--text-secondary);font-size:12px;">${o.part_id}</td>
       <td class="stock-num">${o.quantity}</td>
-      <td style="color:var(--text-secondary);">${o.unit_price ? o.unit_price.toLocaleString('no-NO') + ' kr' : '–'}</td>
-      <td><span class="stock-num">${o.total_price ? o.total_price.toLocaleString('no-NO') + ' kr' : '–'}</span></td>
+      <td style="color:var(--text-secondary);">${o.unit_price ? '$' + o.unit_price.toLocaleString('en-US') : '–'}</td>
+      <td><span class="stock-num">${o.total_price ? '$' + o.total_price.toLocaleString('en-US') : '–'}</span></td>
       <td>${statusBadge(o.status)}</td>
       <td style="color:var(--text-muted);font-size:12px;">${o.order_date ? new Date(o.order_date).toLocaleDateString('en-GB') : '–'}</td>
       <td>

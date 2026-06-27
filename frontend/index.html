@@ -126,7 +126,7 @@
           <div class="chart-sub">Parts, value and low-stock count</div>
           <div style="overflow-x:auto;">
             <table class="cat-table">
-              <thead><tr><th>Category</th><th>Parts</th><th>Value (NOK)</th><th>Low</th></tr></thead>
+              <thead><tr><th>Category</th><th>Parts</th><th>Value (USD)</th><th>Low</th></tr></thead>
               <tbody id="cat-tbody"></tbody>
             </table>
           </div>
@@ -182,7 +182,7 @@ async function loadAll() {
     document.getElementById('kpi-loan').textContent  = summary.total_on_loan ?? '–';
     const val = summary.total_stock_value_nok;
     document.getElementById('kpi-value').textContent = val
-      ? val.toLocaleString('no-NO', { style: 'currency', currency: 'NOK', maximumFractionDigits: 0 })
+      ? val.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
       : '–';
 
     // ── Trend chart ──────────────────────────────────────────────────
@@ -237,7 +237,7 @@ async function loadAll() {
             legend: { position: 'right', labels: { usePointStyle: true, pointStyleWidth: 8, padding: 14 } },
             tooltip: {
               callbacks: {
-                label: ctx => ` ${ctx.parsed.toLocaleString('no-NO')} NOK`
+                label: ctx => ` $${ctx.parsed.toLocaleString('en-US')}`
               }
             }
           }
@@ -249,7 +249,7 @@ async function loadAll() {
         <tr>
           <td style="font-weight:500;">${c.category}</td>
           <td style="color:var(--text-secondary);">${c.total_parts}</td>
-          <td style="color:var(--text-secondary);">${c.total_stock_value.toLocaleString('no-NO')} kr</td>
+          <td style="color:var(--text-secondary);">$${c.total_stock_value.toLocaleString('en-US')}</td>
           <td>${c.low_stock_count > 0 ? `<span class="badge badge-low">${c.low_stock_count}</span>` : '<span style="color:var(--text-muted);">–</span>'}</td>
         </tr>
       `).join('');
