@@ -52,7 +52,19 @@ async function doFetch(method, path, body, isFormData) {
   if (res.status === 204) return null;
 
   const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || `Error: ${res.status}`);
+  if (!res.ok) {
+    // FastAPI validation errors return `detail` as a list of objects – flatten
+    // to a readable message instead of showing "[object Object]".
+    let msg;
+    if (Array.isArray(data.detail)) {
+      msg = data.detail.map(e => (e && e.msg) ? e.msg : JSON.stringify(e)).join('; ');
+    } else if (data.detail && typeof data.detail === 'object') {
+      msg = JSON.stringify(data.detail);
+    } else {
+      msg = data.detail || `Error: ${res.status}`;
+    }
+    throw new Error(msg);
+  }
   return data;
 }
 
