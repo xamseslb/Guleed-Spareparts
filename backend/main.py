@@ -83,6 +83,11 @@ async def audit_log_middleware(request, call_next):
                 request.headers.get("authorization", ""),
                 request.method, path, response.status_code,
             )
+        # Tell the browser to always revalidate the app shell (HTML/CSS/JS),
+        # so a new deploy is never hidden behind a stale cached copy. The files
+        # still send ETags, so unchanged ones come back as a cheap 304.
+        if path.startswith("/app") and path.rsplit(".", 1)[-1] in ("html", "css", "js", "json"):
+            response.headers["Cache-Control"] = "no-cache"
     except Exception:
         pass
     return response
