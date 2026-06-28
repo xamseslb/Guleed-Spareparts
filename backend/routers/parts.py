@@ -6,7 +6,7 @@ import os
 import uuid
 import shutil
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, status
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, status, Body
 from sqlalchemy.orm import Session
 from PIL import Image as PilImage
 from backend.database import get_db
@@ -207,6 +207,39 @@ def delete_part(part_id: int, db: Session = Depends(get_db), current_user: User 
             os.remove(full_path)
     db.delete(part)
     db.commit()
+
+
+# ─── Bulk-slett varer ─────────────────────────────────────────────────
+@router.post("/bulk-delete")
+def bulk_delete_parts(
+    ids: List[int] = Body(..., embed=True),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Delete many parts at once. Parts that are referenced by an order or a
+    loan are kept (deleting them would break that history) and reported back."""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can delete parts")
+
+    deleted, blocked = 0, []
+    for part_id in ids:
+        part = db.query(Part).filter(Part.id == part_id).first()
+        if not part:
+            continue
+        refs = db.query(Order).filter(Order.part_id == part_id).count() \
+            + db.query(Loan).filter(Loan.part_id == part_id).count()
+        if refs:
+            blocked.append({"part_number": part.part_number, "reason": f"{refs} order/loan record(s)"})
+            continue
+        for img_path in (part.images or []):
+            full_path = os.path.join(UPLOAD_DIR, os.path.basename(img_path))
+            if os.path.exists(full_path):
+                os.remove(full_path)
+        db.delete(part)
+        deleted += 1
+
+    db.commit()
+    return {"deleted": deleted, "blocked": blocked}
 
 
 # ─── Last opp bilde ───────────────────────────────────────────────────

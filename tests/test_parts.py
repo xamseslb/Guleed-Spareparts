@@ -118,3 +118,23 @@ def test_import_template_downloads_xlsx(client, auth_headers):
     assert r.status_code == 200, r.text
     assert "spreadsheetml.sheet" in r.headers["content-type"]
     assert r.content[:2] == b"PK"  # xlsx is a zip; starts with PK
+
+
+def test_bulk_delete_parts(client, auth_headers):
+    a = client.post("/api/parts/", json={**SAMPLE_PART, "part_number": "BULK-1"}, headers=auth_headers).json()
+    b = client.post("/api/parts/", json={**SAMPLE_PART, "part_number": "BULK-2"}, headers=auth_headers).json()
+    r = client.post("/api/parts/bulk-delete", json={"ids": [a["id"], b["id"]]}, headers=auth_headers)
+    assert r.status_code == 200, r.text
+    assert r.json()["deleted"] == 2
+    assert client.get(f"/api/parts/{a['id']}", headers=auth_headers).status_code == 404
+
+
+def test_bulk_delete_keeps_referenced_parts(client, auth_headers):
+    p = client.post("/api/parts/", json={**SAMPLE_PART, "part_number": "BULK-REF"}, headers=auth_headers).json()
+    client.post("/api/orders/", json={"customer_id": 1, "part_id": p["id"], "quantity": 1}, headers=auth_headers)
+    r = client.post("/api/parts/bulk-delete", json={"ids": [p["id"]]}, headers=auth_headers)
+    assert r.status_code == 200, r.text
+    assert r.json()["deleted"] == 0
+    assert len(r.json()["blocked"]) == 1
+    # Still there because an order references it
+    assert client.get(f"/api/parts/{p['id']}", headers=auth_headers).status_code == 200

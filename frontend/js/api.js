@@ -189,6 +189,7 @@ export const api = {
     if (car_make) params.set('car_make', car_make);
     if (car_model) params.set('car_model', car_model);
     if (low_stock_only) params.set('low_stock_only', 'true');
+    params.set('limit', '1000');   // show the whole catalogue, not just the first 100
     return request('GET', `/api/parts/?${params}`);
   },
 
@@ -206,6 +207,10 @@ export const api = {
 
   async deletePart(id) {
     return request('DELETE', `/api/parts/${id}`);
+  },
+
+  async bulkDeleteParts(ids) {
+    return request('POST', '/api/parts/bulk-delete', { ids });
   },
 
   async uploadImage(partId, file) {

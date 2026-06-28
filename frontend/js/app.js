@@ -11,6 +11,8 @@ const token = localStorage.getItem('gs_token');
 if (!token) window.location.href = 'login.html';
 
 const user = JSON.parse(localStorage.getItem('gs_user') || '{}');
+const IS_ADMIN = user.role === 'admin';
+const selectedParts = new Set();   // ids ticked for bulk delete
 const fullName = user.full_name || 'Employee';
 document.getElementById('sidebar-username').textContent = fullName;
 document.getElementById('sidebar-role').textContent = user.role || '';
@@ -69,18 +71,20 @@ function renderTable(parts) {
   if (rc) rc.textContent = `${parts.length} part${parts.length === 1 ? '' : 's'} listed`;
   if (!parts.length) {
     tbody.innerHTML = `
-      <tr><td colspan="9">
+      <tr><td colspan="10">
         <div class="empty-state">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
           <h3>No parts found</h3>
           <p>Try adjusting your filters or add a new part.</p>
         </div>
       </td></tr>`;
+    syncBulkUI();
     return;
   }
 
   tbody.innerHTML = parts.map(p => `
     <tr style="cursor:pointer;" onclick="openPartAction(${p.id})">
+      ${IS_ADMIN ? `<td class="col-select" onclick="event.stopPropagation()"><input type="checkbox" class="row-select" value="${p.id}" ${selectedParts.has(p.id) ? 'checked' : ''}></td>` : ''}
       <td data-label="Part No."><span class="cell-part-number">${p.part_number}</span></td>
       <td data-label="Name">
         <div class="cell-name">${p.name}</div>
@@ -104,6 +108,59 @@ function renderTable(parts) {
       </td>
     </tr>
   `).join('');
+  syncBulkUI();
+}
+
+// ─── Bulk select / delete ───────────────────────────────────────────
+function syncBulkUI() {
+  const bar = document.getElementById('bulk-bar');
+  if (!bar) return;
+  // Drop ids that are no longer in the current list (e.g. after filtering).
+  const visible = new Set(allParts.map(p => p.id));
+  [...selectedParts].forEach(id => { if (!visible.has(id)) selectedParts.delete(id); });
+
+  bar.style.display = selectedParts.size ? 'flex' : 'none';
+  const countEl = document.getElementById('bulk-count');
+  if (countEl) countEl.textContent = `${selectedParts.size} selected`;
+  const selectAll = document.getElementById('select-all-parts');
+  if (selectAll) {
+    selectAll.checked = allParts.length > 0 && selectedParts.size === allParts.length;
+    selectAll.indeterminate = selectedParts.size > 0 && selectedParts.size < allParts.length;
+  }
+}
+
+if (IS_ADMIN) {
+  // One delegated listener handles every row checkbox, current or future.
+  document.getElementById('parts-table-body').addEventListener('change', (e) => {
+    const cb = e.target.closest('.row-select');
+    if (!cb) return;
+    const id = Number(cb.value);
+    cb.checked ? selectedParts.add(id) : selectedParts.delete(id);
+    syncBulkUI();
+  });
+  document.getElementById('select-all-parts').addEventListener('change', (e) => {
+    if (e.target.checked) allParts.forEach(p => selectedParts.add(p.id));
+    else selectedParts.clear();
+    renderTable(allParts);   // re-render to reflect every checkbox
+  });
+  document.getElementById('bulk-clear').addEventListener('click', () => {
+    selectedParts.clear();
+    renderTable(allParts);
+  });
+  document.getElementById('bulk-delete').addEventListener('click', async () => {
+    const ids = [...selectedParts];
+    if (!ids.length) return;
+    if (!confirm(`Delete ${ids.length} selected part${ids.length === 1 ? '' : 's'}? This cannot be undone.`)) return;
+    try {
+      const res = await api.bulkDeleteParts(ids);
+      selectedParts.clear();
+      let msg = `${res.deleted} part${res.deleted === 1 ? '' : 's'} deleted`;
+      if (res.blocked && res.blocked.length) msg += `; ${res.blocked.length} kept (still used by orders/loans)`;
+      toast(msg, res.blocked && res.blocked.length ? 'info' : 'success');
+      loadParts();
+      loadSummary();
+    } catch (err) { toast(err.message, 'error'); }
+  });
 }
 
 // ─── Last varer ─────────────────────────────────────────────────────

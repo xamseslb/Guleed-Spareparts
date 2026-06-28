@@ -156,11 +156,24 @@
         </label>
       </div>
 
+      <!-- Bulk actions – appears when one or more rows are ticked -->
+      <div id="bulk-bar" class="bulk-bar" style="display:none;">
+        <span id="bulk-count" class="bulk-count">0 selected</span>
+        <button class="btn btn-secondary" id="bulk-clear" style="padding:5px 12px;font-size:12px;">Clear</button>
+        <button class="btn btn-danger" id="bulk-delete" style="padding:5px 12px;font-size:12px;">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          Delete selected
+        </button>
+      </div>
+
       <!-- Table – click any row to register a purchase or loan -->
       <div class="table-wrap">
         <table class="data-table cards-sm" aria-label="Spare parts">
           <thead>
             <tr>
+              <th class="col-select admin-only" style="display:none;width:34px;">
+                <input type="checkbox" id="select-all-parts" title="Select all" aria-label="Select all parts">
+              </th>
               <th>Part No.</th>
               <th>Name</th>
               <th>Category</th>
