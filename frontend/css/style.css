@@ -189,7 +189,8 @@ input, select, textarea { font-family: var(--font); }
   border: 1px solid rgba(255,255,255,.06);
 }
 .logout-btn svg { width: 13px; height: 13px; }
-.logout-btn:hover { background: rgba(255,255,255,.04); color: #a0a6b4; }
+.logout-btn:hover { background: rgba(220,38,38,.14); color: #f87171; border-color: rgba(220,38,38,.4); }
+.logout-btn:active { background: rgba(220,38,38,.22); color: #fca5a5; }
 
 /* ─── Main Content ────────────────────────────────────────────────── */
 /* min-width:0 lets a wide table scroll inside its panel instead of pushing
