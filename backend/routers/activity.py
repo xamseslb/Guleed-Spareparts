@@ -30,6 +30,7 @@ def list_activity(
             "method": r.method,
             "path": r.path,
             "status_code": r.status_code,
+            "detail": r.detail,
         }
         for r in rows
     ]

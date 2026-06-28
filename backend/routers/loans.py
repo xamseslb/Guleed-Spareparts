@@ -15,7 +15,7 @@ When a loan is returned: part.loaned_quantity decreases by quantity
 
 from typing import List, Optional
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models.loan import Loan
@@ -189,6 +189,7 @@ def return_loan(
 @router.delete("/{loan_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_loan(
     loan_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -199,6 +200,9 @@ def delete_loan(
     # Only admins may delete
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only admins can delete records")
+
+    part = db.query(Part).filter(Part.id == loan.part_id).first()
+    request.scope["audit_detail"] = f"credit sale #{loan.id} ({part.part_number if part else 'part #' + str(loan.part_id)} ×{loan.quantity})"
 
     # If still unpaid (not yet a finalized sale), release the reserved quantity back
     if loan.status in ("unpaid", "overdue"):

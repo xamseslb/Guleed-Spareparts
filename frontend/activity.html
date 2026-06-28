@@ -75,6 +75,9 @@
     <header class="topbar">
       <h1 class="topbar-title">Activity log</h1>
       <div class="topbar-actions">
+        <label class="filter-toggle" style="margin-right:8px;">
+          <input type="checkbox" id="deletions-only"> Deletions only
+        </label>
         <button class="btn btn-secondary" id="refresh-btn">Refresh</button>
       </div>
     </header>
@@ -135,9 +138,19 @@ function fmtTime(s) {
 }
 
 // Turn "DELETE /api/orders/5" into "Deleted order #5"
-function describe(method, path) {
+// A POST to /bulk-delete is really a deletion, even though the method is POST.
+function isDeletion(r) {
+  return r.method === 'DELETE' || /bulk-delete/.test(r.path);
+}
+
+// Turn "DELETE /api/orders/5" into "Deleted order #5", appending the saved
+// detail (e.g. the part number) when we have it.
+function describe(r) {
+  const method = r.method, path = r.path;
   const p = path.replace(/^\/api\//, '').replace(/\/$/, '');
   const seg = p.split('/');
+  const withDetail = (text) => r.detail ? `${text} — ${r.detail}` : text;
+  if (/bulk-delete/.test(path)) return withDetail('Deleted parts');
   if (seg[0] === 'loans' && seg[2] === 'return') return `Marked credit sale #${seg[1]} as paid`;
   if (seg[0] === 'auth' && seg[1] === 'register') return 'Created a user';
   if (seg[0] === 'auth' && seg[1] === 'users') return `Updated user #${seg[2] || ''}`;
@@ -147,38 +160,50 @@ function describe(method, path) {
   const hasId = seg[1] && /^\d+$/.test(seg[1]);
   if (method === 'POST' && !hasId) return `Created a ${entity}`;
   const verb = method === 'DELETE' ? 'Deleted' : method === 'POST' ? 'Created' : 'Updated';
-  return `${verb} ${entity}${hasId ? ' #' + seg[1] : ''}`;
+  const base = `${verb} ${entity}${hasId ? ' #' + seg[1] : ''}`;
+  return (method === 'DELETE') ? withDetail(base) : base;
 }
 
-function actionBadge(method) {
-  const cls = { POST: 'badge-ok', DELETE: 'badge-empty', PUT: 'badge-category', PATCH: 'badge-category' }[method] || 'badge-category';
-  const label = { POST: 'Create', DELETE: 'Delete', PUT: 'Update', PATCH: 'Update' }[method] || method;
+function actionBadge(r) {
+  if (isDeletion(r)) return `<span class="badge badge-empty">Delete</span>`;
+  const cls = { POST: 'badge-ok', PUT: 'badge-category', PATCH: 'badge-category' }[r.method] || 'badge-category';
+  const label = { POST: 'Create', PUT: 'Update', PATCH: 'Update' }[r.method] || r.method;
   return `<span class="badge ${cls}">${label}</span>`;
+}
+
+let allEvents = [];
+
+function render() {
+  const tbody = document.getElementById('activity-table-body');
+  const deletionsOnly = document.getElementById('deletions-only').checked;
+  const rows = deletionsOnly ? allEvents.filter(isDeletion) : allEvents;
+  document.getElementById('record-count').textContent =
+    `${rows.length} event${rows.length === 1 ? '' : 's'}${deletionsOnly ? ' (deletions)' : ''}`;
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+      <h3>${deletionsOnly ? 'No deletions yet' : 'No activity yet'}</h3><p>Changes will appear here as they happen.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td style="color:var(--text-secondary);white-space:nowrap;">${fmtTime(r.timestamp)}</td>
+      <td><span class="cell-name">${r.username || 'unknown'}</span></td>
+      <td>${actionBadge(r)} <span style="margin-left:6px;">${describe(r)}</span></td>
+    </tr>`).join('');
 }
 
 async function load() {
   try {
-    const rows = await api.getActivity() || [];
-    const tbody = document.getElementById('activity-table-body');
-    document.getElementById('record-count').textContent = `${rows.length} event${rows.length === 1 ? '' : 's'}`;
-    if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
-        <h3>No activity yet</h3><p>Changes will appear here as they happen.</p></div></td></tr>`;
-      return;
-    }
-    tbody.innerHTML = rows.map(r => `
-      <tr>
-        <td style="color:var(--text-secondary);white-space:nowrap;">${fmtTime(r.timestamp)}</td>
-        <td><span class="cell-name">${r.username || 'unknown'}</span></td>
-        <td>${actionBadge(r.method)} <span style="margin-left:6px;">${describe(r.method, r.path)}</span></td>
-      </tr>`).join('');
+    allEvents = await api.getActivity() || [];
+    render();
   } catch (err) {
     toast('Failed to load activity: ' + err.message, 'error');
   }
 }
 
 document.getElementById('refresh-btn').addEventListener('click', load);
+document.getElementById('deletions-only').addEventListener('change', render);
 load();
 </script>
 </body>

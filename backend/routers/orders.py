@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models.order import Order, OrderStatus
@@ -125,12 +125,14 @@ def update_order(
 
 
 @router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_order(order_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def delete_order(order_id: int, request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only admins can delete orders")
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+    part = db.query(Part).filter(Part.id == order.part_id).first()
+    request.scope["audit_detail"] = f"order #{order.id} ({part.part_number if part else 'part #' + str(order.part_id)} ×{order.quantity})"
     # Return stock to inventory if this order had consumed it
     if order.status == OrderStatus.LEVERT:
         part = db.query(Part).filter(Part.id == order.part_id).first()

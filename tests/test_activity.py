@@ -48,3 +48,20 @@ def test_activity_log_is_admin_only(client, auth_headers):
     assert client.get("/api/activity/", headers=auth_headers).status_code == 200
     emp = _employee_headers(client, auth_headers, username="emp3")
     assert client.get("/api/activity/", headers=emp).status_code == 403
+
+
+def test_activity_endpoint_returns_detail(client, auth_headers):
+    # The audit middleware writes via its own SessionLocal (a separate DB in
+    # tests), so insert a row directly into the test DB and check the endpoint
+    # surfaces the human-readable `detail`.
+    from tests.conftest import TestingSessionLocal
+    from backend.models.activity import ActivityLog
+    db = TestingSessionLocal()
+    db.add(ActivityLog(username="emp1", method="DELETE", path="/api/parts/9",
+                       status_code=204, detail="part AUD-1 (Audited Pump)"))
+    db.commit(); db.close()
+
+    log = client.get("/api/activity/", headers=auth_headers).json()
+    deletions = [e for e in log if e["method"] == "DELETE"]
+    assert deletions, "delete not returned"
+    assert deletions[0]["detail"] == "part AUD-1 (Audited Pump)"

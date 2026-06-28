@@ -6,7 +6,7 @@ import os
 import uuid
 import shutil
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, status, Body
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, status, Body, Request
 from sqlalchemy.orm import Session
 from PIL import Image as PilImage
 from backend.database import get_db
@@ -184,12 +184,14 @@ def update_part(
 
 # ─── Slett vare ───────────────────────────────────────────────────────
 @router.delete("/{part_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_part(part_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def delete_part(part_id: int, request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only admins can delete parts")
     part = db.query(Part).filter(Part.id == part_id).first()
     if not part:
         raise HTTPException(status_code=404, detail="Part not found")
+    # Record what was deleted (for the admin's deletion log) before it's gone.
+    request.scope["audit_detail"] = f"part {part.part_number} ({part.name})"
 
     # Don't orphan order/loan history – block deletion if the part is referenced
     order_count = db.query(Order).filter(Order.part_id == part_id).count()
@@ -212,6 +214,7 @@ def delete_part(part_id: int, db: Session = Depends(get_db), current_user: User 
 # ─── Bulk-slett varer ─────────────────────────────────────────────────
 @router.post("/bulk-delete")
 def bulk_delete_parts(
+    request: Request,
     ids: List[int] = Body(..., embed=True),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -221,7 +224,7 @@ def bulk_delete_parts(
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only admins can delete parts")
 
-    deleted, blocked = 0, []
+    deleted, blocked, removed_numbers = 0, [], []
     for part_id in ids:
         part = db.query(Part).filter(Part.id == part_id).first()
         if not part:
@@ -231,6 +234,7 @@ def bulk_delete_parts(
         if refs:
             blocked.append({"part_number": part.part_number, "reason": f"{refs} order/loan record(s)"})
             continue
+        removed_numbers.append(part.part_number)
         for img_path in (part.images or []):
             full_path = os.path.join(UPLOAD_DIR, os.path.basename(img_path))
             if os.path.exists(full_path):
@@ -239,6 +243,9 @@ def bulk_delete_parts(
         deleted += 1
 
     db.commit()
+    if deleted:
+        shown = ", ".join(removed_numbers[:5]) + ("…" if len(removed_numbers) > 5 else "")
+        request.scope["audit_detail"] = f"{deleted} parts ({shown})"
     return {"deleted": deleted, "blocked": blocked}
 
 

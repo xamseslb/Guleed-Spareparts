@@ -8,7 +8,7 @@ All routes here require the user to be logged in (current_user dependency).
 """
 
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models.customer import Customer
@@ -92,6 +92,7 @@ def update_customer(
 @router.delete("/{customer_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_customer(
     customer_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -103,6 +104,8 @@ def delete_customer(
     # Only admins may delete
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only admins can delete customers")
+
+    request.scope["audit_detail"] = f"customer {c.name}"
 
     # Don't orphan order/loan history – block deletion if the customer is referenced
     order_count = db.query(Order).filter(Order.customer_id == customer_id).count()

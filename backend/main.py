@@ -82,6 +82,7 @@ async def audit_log_middleware(request, call_next):
             record_activity(
                 request.headers.get("authorization", ""),
                 request.method, path, response.status_code,
+                detail=request.scope.get("audit_detail"),
             )
         # Tell the browser to always revalidate the app shell (HTML/CSS/JS),
         # so a new deploy is never hidden behind a stale cached copy. The files

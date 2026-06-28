@@ -24,7 +24,7 @@ def _username_from_auth(auth_header: str):
     return None
 
 
-def record_activity(auth_header: str, method: str, path: str, status_code: int):
+def record_activity(auth_header: str, method: str, path: str, status_code: int, detail: str = None):
     db = SessionLocal()
     try:
         db.add(ActivityLog(
@@ -32,6 +32,7 @@ def record_activity(auth_header: str, method: str, path: str, status_code: int):
             method=method,
             path=path,
             status_code=status_code,
+            detail=detail,
         ))
         db.commit()
     except Exception:

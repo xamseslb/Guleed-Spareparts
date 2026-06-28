@@ -19,3 +19,4 @@ class ActivityLog(Base):
     method = Column(String(10), nullable=False)      # POST / PUT / DELETE
     path = Column(String(300), nullable=False)       # e.g. /api/orders/5
     status_code = Column(Integer, nullable=False)    # result of the action
+    detail = Column(String(300), nullable=True)      # human label, e.g. "part 81551-90k09 (Brake Pad)"
