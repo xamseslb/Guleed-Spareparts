@@ -109,3 +109,12 @@ def test_stock_status_values(client, auth_headers):
 def test_unauthorized_access(client):
     response = client.get("/api/parts/")
     assert response.status_code == 401
+
+
+def test_import_template_downloads_xlsx(client, auth_headers):
+    """The /import-template route must resolve before /{part_id} and return a
+    real .xlsx (regression: it used to be swallowed by the part-id route)."""
+    r = client.get("/api/parts/import-template", headers=auth_headers)
+    assert r.status_code == 200, r.text
+    assert "spreadsheetml.sheet" in r.headers["content-type"]
+    assert r.content[:2] == b"PK"  # xlsx is a zip; starts with PK

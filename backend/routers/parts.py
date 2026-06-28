@@ -68,6 +68,66 @@ def get_parts(
 
 
 # ─── Hent én vare ─────────────────────────────────────────────────────
+# Header order + which columns are required, used for the downloadable template.
+# NOTE: this static route must be declared BEFORE "/{part_id}", otherwise
+# FastAPI matches "import-template" as a part id and returns a 422.
+TEMPLATE_COLUMNS = [
+    ("part_number", True, "BR-8690"),
+    ("name", True, "Front Brake Pads"),
+    ("category", True, "Brakes"),
+    ("unit_price", True, 25),
+    ("description", False, "Fits Toyota Corolla 2008–2014"),
+    ("stock_quantity", False, 42),
+    ("low_stock_threshold", False, 5),
+    ("location", False, "Shelf B, Row 04"),
+    ("ordered_quantity", False, 10),
+]
+
+
+@router.get("/import-template")
+def import_template(current_user: User = Depends(get_current_user)):
+    """A ready-to-fill Excel workbook. Real .xlsx so columns stay separate
+    regardless of the user's regional comma/semicolon settings."""
+    import io
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.comments import Comment
+    from fastapi.responses import Response
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "parts_template"
+
+    header_fill = PatternFill("solid", fgColor="1E3A5F")
+    header_font = Font(bold=True, color="FFFFFF")
+    example_rows = [
+        ["BR-8690", "Front Brake Pads", "Brakes", 25, "Fits Toyota Corolla 2008–2014", 42, 5, "Shelf B, Row 04", 10],
+        ["OIL-5W40-2L", "Engine Oil 5W-40 — 2L", "Oils & Fluids", 18, "Fully synthetic, 2 litre", 30, 6, "Shelf A, Row 01", 0],
+    ]
+
+    for col_idx, (field, required, _) in enumerate(TEMPLATE_COLUMNS, start=1):
+        cell = ws.cell(row=1, column=col_idx, value=field)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center")
+        cell.comment = Comment("Required" if required else "Optional — may be left blank", "Guleed")
+        ws.column_dimensions[cell.column_letter].width = max(14, len(field) + 4)
+
+    for r, example in enumerate(example_rows, start=2):
+        for c, value in enumerate(example, start=1):
+            ws.cell(row=r, column=c, value=value)
+
+    ws.freeze_panes = "A2"  # keep the header visible while scrolling
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="parts_template.xlsx"'},
+    )
+
+
 @router.get("/{part_id}", response_model=PartOut)
 def get_part(part_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     part = db.query(Part).filter(Part.id == part_id).first()
@@ -243,64 +303,6 @@ def _opt_int(v, default):
         return int(float(v))
     except (ValueError, TypeError):
         return default
-
-
-# Header order + which columns are required, used for the downloadable template.
-TEMPLATE_COLUMNS = [
-    ("part_number", True, "BR-8690"),
-    ("name", True, "Front Brake Pads"),
-    ("category", True, "Brakes"),
-    ("unit_price", True, 25),
-    ("description", False, "Fits Toyota Corolla 2008–2014"),
-    ("stock_quantity", False, 42),
-    ("low_stock_threshold", False, 5),
-    ("location", False, "Shelf B, Row 04"),
-    ("ordered_quantity", False, 10),
-]
-
-
-@router.get("/import-template")
-def import_template(current_user: User = Depends(get_current_user)):
-    """A ready-to-fill Excel workbook. Real .xlsx so columns stay separate
-    regardless of the user's regional comma/semicolon settings."""
-    import io
-    from openpyxl import Workbook
-    from openpyxl.styles import Font, PatternFill, Alignment
-    from openpyxl.comments import Comment
-    from fastapi.responses import Response
-
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "parts_template"
-
-    header_fill = PatternFill("solid", fgColor="1E3A5F")
-    header_font = Font(bold=True, color="FFFFFF")
-    example_rows = [
-        ["BR-8690", "Front Brake Pads", "Brakes", 25, "Fits Toyota Corolla 2008–2014", 42, 5, "Shelf B, Row 04", 10],
-        ["OIL-5W40-2L", "Engine Oil 5W-40 — 2L", "Oils & Fluids", 18, "Fully synthetic, 2 litre", 30, 6, "Shelf A, Row 01", 0],
-    ]
-
-    for col_idx, (field, required, _) in enumerate(TEMPLATE_COLUMNS, start=1):
-        cell = ws.cell(row=1, column=col_idx, value=field)
-        cell.fill = header_fill
-        cell.font = header_font
-        cell.alignment = Alignment(horizontal="center")
-        cell.comment = Comment("Required" if required else "Optional — may be left blank", "Guleed")
-        ws.column_dimensions[cell.column_letter].width = max(14, len(field) + 4)
-
-    for r, example in enumerate(example_rows, start=2):
-        for c, value in enumerate(example, start=1):
-            ws.cell(row=r, column=c, value=value)
-
-    ws.freeze_panes = "A2"  # keep the header visible while scrolling
-
-    buf = io.BytesIO()
-    wb.save(buf)
-    return Response(
-        content=buf.getvalue(),
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": 'attachment; filename="parts_template.xlsx"'},
-    )
 
 
 @router.post("/import")
