@@ -57,6 +57,20 @@ def test_import_with_only_part_number_and_stock(client, auth_headers):
     assert p["stock_quantity"] == 62
 
 
+def test_import_blank_price_is_zero_not_nan(client, auth_headers):
+    # A blank price cell must become 0 – a NaN serialises to null and crashes
+    # the parts table (and breaks the stock-value total).
+    text = "part_number,name,stock_quantity\nNAN-1,Some part,7\n"
+    r = client.post("/api/parts/import", files=_csv(text), headers=auth_headers)
+    assert r.status_code == 200, r.text
+    parts = client.get("/api/parts/?q=NAN-1", headers=auth_headers).json()
+    p = next(x for x in parts if x["part_number"] == "NAN-1")
+    assert p["unit_price"] == 0           # real number, never null/NaN
+    # The summary endpoint must still return a numeric stock value.
+    summary = client.get("/api/analytics/summary", headers=auth_headers).json()
+    assert isinstance(summary["total_stock_value_nok"], (int, float))
+
+
 def test_import_template_downloads(client, auth_headers):
     # Regression: the static /import-template route must win over /{part_id}.
     r = client.get("/api/parts/import-template", headers=auth_headers)

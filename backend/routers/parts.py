@@ -369,6 +369,8 @@ async def import_parts(
             category = _opt_str(row.get("category")) or "Uncategorized"
             try:
                 price = float(row.get("unit_price"))
+                if price != price:                        # NaN (blank Excel cell) → unknown
+                    price = 0.0
             except (ValueError, TypeError):
                 price = 0.0                                # unknown price for now
 

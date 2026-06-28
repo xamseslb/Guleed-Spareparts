@@ -91,7 +91,7 @@ function renderTable(parts) {
       <td data-label="Stock">${stockBadge(p)}</td>
       <td data-label="Ordered" class="stock-secondary">${p.ordered_quantity}</td>
       <td data-label="On Loan" class="stock-secondary">${p.loaned_quantity}</td>
-      <td data-label="Price"><span class="stock-num">$${(p.unit_price).toLocaleString('en-US')}</span></td>
+      <td data-label="Price"><span class="stock-num">$${Number(p.unit_price || 0).toLocaleString('en-US')}</span></td>
       <td class="card-actions" onclick="event.stopPropagation()">
         <div class="cell-actions">
           <button class="btn-icon" onclick="editPart(${p.id})" title="Edit" aria-label="Edit ${p.name}">
@@ -475,7 +475,7 @@ window.openPartAction = async (partId) => {
   // Fill in the header
   document.getElementById('action-part-name').textContent = part.name;
   document.getElementById('action-part-meta').textContent =
-    `${part.part_number} · ${part.category} · ${available} pcs available · $${part.unit_price.toLocaleString('en-US')}`;
+    `${part.part_number} · ${part.category} · ${available} pcs available · $${Number(part.unit_price || 0).toLocaleString('en-US')}`;
 
   // Reset to choose step
   showStep('choose');

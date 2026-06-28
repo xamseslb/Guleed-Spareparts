@@ -20,6 +20,15 @@ from backend.models.part import Part
 from backend.models.order import Order
 
 
+def _price(v) -> float:
+    """A blank imported price can be NaN; treat it as 0 so sums stay valid."""
+    try:
+        v = float(v)
+        return 0.0 if v != v else v   # v != v is True only for NaN
+    except (ValueError, TypeError):
+        return 0.0
+
+
 def get_low_stock_parts(db: Session) -> List[Dict[str, Any]]:
     """
     Returns all parts where stock is at or below the low-stock threshold.
@@ -68,10 +77,10 @@ def get_category_stats(db: Session) -> List[Dict[str, Any]]:
     # Convert the list of Part objects to a Pandas DataFrame (like an Excel table)
     df = pd.DataFrame([{
         "category": p.category,
-        "unit_price": p.unit_price,
+        "unit_price": _price(p.unit_price),
         "stock_quantity": p.stock_quantity,
         "low_stock": p.stock_quantity <= p.low_stock_threshold,  # True/False
-        "total_value": p.unit_price * p.stock_quantity,
+        "total_value": _price(p.unit_price) * p.stock_quantity,
     } for p in parts])
 
     # Group by category and calculate summary stats for each group
@@ -156,7 +165,7 @@ def get_inventory_summary(db: Session) -> Dict[str, Any]:
         return {}
 
     # Total value of everything in stock (price × quantity for each part, then sum)
-    total_value = sum(p.unit_price * p.stock_quantity for p in parts)
+    total_value = sum(_price(p.unit_price) * p.stock_quantity for p in parts)
 
     return {
         "total_parts": len(parts),

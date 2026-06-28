@@ -10,9 +10,10 @@ We have 3 schemas:
   - PartOut     → what the API sends BACK to you (what you see in the response)
 """
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from typing import Optional, List
 from datetime import datetime
+import math
 
 
 # --- Car Compatibility Model ---
@@ -80,3 +81,15 @@ class PartOut(BaseModel):
     stock_status: str          # "OK", "Low", or "Empty" (from the @property in Part model)
     created_at: datetime
     updated_at: Optional[datetime]
+
+    # Older imports could store a blank price as NaN, which serialises to an
+    # invalid/null JSON value and crashes the table. Treat it as 0 on the way out.
+    @field_validator("unit_price", mode="before")
+    @classmethod
+    def _clean_price(cls, v):
+        try:
+            if v is None or math.isnan(float(v)):
+                return 0.0
+        except (ValueError, TypeError):
+            return 0.0
+        return v
