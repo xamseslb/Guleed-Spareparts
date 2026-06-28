@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Activity – Guleed Spareparts</title>
+  <title>Sales – Guleed Spareparts</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#21303f">
@@ -12,6 +12,22 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Guleed">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <style>
+    .period-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+    .period-btn {
+      padding: 7px 14px; font-size: 13px; font-weight: 500;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--surface); color: var(--text-secondary); cursor: pointer;
+    }
+    .period-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .sales-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+    .top-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .top-table th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); text-align: left; padding: 0 0 10px; }
+    .top-table td { padding: 9px 0; border-bottom: 1px solid #f2f3f5; }
+    .top-table tr:last-child td { border-bottom: none; }
+    .top-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .top-table th.num { text-align: right; }
+  </style>
 </head>
 <body>
 <div class="layout">
@@ -45,16 +61,16 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
         Dashboard
       </a>
-      <a href="sales.html" class="nav-item">
+      <a href="sales.html" class="nav-item active">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
         Sales
       </a>
-      <div class="nav-section-label" style="margin-top:8px;">Administration</div>
-      <a href="users.html" class="nav-item">
+      <div class="nav-section-label admin-only" style="margin-top:8px;display:none;">Administration</div>
+      <a href="users.html" class="nav-item admin-only" style="display:none;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
         Users
       </a>
-      <a href="activity.html" class="nav-item active">
+      <a href="activity.html" class="nav-item admin-only" style="display:none;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
         Activity
       </a>
@@ -73,113 +89,91 @@
 
   <div class="main-content">
     <header class="topbar">
-      <h1 class="topbar-title">Activity log</h1>
-      <div class="topbar-actions">
-        <button class="btn btn-secondary" id="refresh-btn">Refresh</button>
-      </div>
+      <h1 class="topbar-title">Sales</h1>
     </header>
 
     <div class="page-body">
-      <p style="font-size:12.5px;color:var(--text-muted);margin-bottom:10px;">
-        Every change (create, edit, delete) is recorded here with who did it and when.
-      </p>
-      <div class="table-wrap">
-        <table class="data-table" aria-label="Activity">
+      <div class="period-bar" id="period-bar">
+        <button class="period-btn" data-period="today">Today</button>
+        <button class="period-btn" data-period="week">This week</button>
+        <button class="period-btn active" data-period="month">This month</button>
+        <button class="period-btn" data-period="all">All time</button>
+      </div>
+
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-card"><div class="stat-label">Items Sold</div><div class="stat-value" id="kpi-units">–</div></div>
+        <div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-value" id="kpi-revenue" style="font-size:19px;letter-spacing:-.3px;">–</div></div>
+        <div class="stat-card"><div class="stat-label">Sales (lines)</div><div class="stat-value" id="kpi-tx">–</div></div>
+      </div>
+
+      <div class="sales-card" style="margin-top:20px;">
+        <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:4px;">Best sellers</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Top parts by revenue in this period</div>
+        <table class="top-table">
           <thead>
-            <tr>
-              <th>When</th>
-              <th>User</th>
-              <th>Action</th>
-            </tr>
+            <tr><th>Part No.</th><th>Name</th><th class="num">Units</th><th class="num">Revenue</th></tr>
           </thead>
-          <tbody id="activity-table-body">
-            <tr><td colspan="3" style="text-align:center;padding:48px;"><span class="spinner"></span></td></tr>
+          <tbody id="top-body">
+            <tr><td colspan="4" style="text-align:center;padding:32px;"><span class="spinner"></span></td></tr>
           </tbody>
         </table>
-      </div>
-      <div class="table-footer">
-        <span id="record-count" class="record-count">–</span>
       </div>
     </div>
   </div>
 </div>
 
-<div class="toast-container" id="toast-container"></div>
+<div class="toast-container" id="toast-container" aria-live="polite"></div>
 
 <script type="module">
 import { api } from './js/api.js';
 
 const token = localStorage.getItem('gs_token');
 if (!token) window.location.href = 'login.html';
-const user = JSON.parse(localStorage.getItem('gs_user') || '{}');
-if (user.role !== 'admin') window.location.href = 'index.html';
 
-const fullName = user.full_name || 'Admin';
+const user = JSON.parse(localStorage.getItem('gs_user') || '{}');
+const fullName = user.full_name || 'Employee';
 document.getElementById('sidebar-username').textContent = fullName;
 document.getElementById('sidebar-role').textContent = user.role || '';
 document.getElementById('user-avatar').textContent = fullName.charAt(0).toUpperCase();
 document.getElementById('logout-btn').addEventListener('click', () => { localStorage.clear(); window.location.href = 'login.html'; });
+try { if (user.role === 'admin') document.querySelectorAll('.admin-only').forEach(e => e.style.display = ''); } catch (e) {}
 
-function toast(msg, type = 'info') {
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.textContent = msg;
-  document.getElementById('toast-container').appendChild(el);
-  setTimeout(() => el.remove(), 3500);
-}
+const money = v => '$' + Number(v || 0).toLocaleString('en-US');
 
-function fmtTime(s) {
-  if (!s) return '–';
-  const d = new Date(s);
-  return d.toLocaleDateString('no-NO') + ' ' + d.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
-}
-
-// Turn "DELETE /api/orders/5" into "Deleted order #5"
-function describe(method, path) {
-  const p = path.replace(/^\/api\//, '').replace(/\/$/, '');
-  const seg = p.split('/');
-  if (seg[0] === 'loans' && seg[2] === 'return') return `Marked credit sale #${seg[1]} as paid`;
-  if (seg[0] === 'auth' && seg[1] === 'register') return 'Created a user';
-  if (seg[0] === 'auth' && seg[1] === 'users') return `Updated user #${seg[2] || ''}`;
-  if (seg[0] === 'parts' && seg[2] === 'images') return `${method === 'DELETE' ? 'Removed' : 'Added'} an image on part #${seg[1]}`;
-  const names = { orders: 'order', parts: 'part', customers: 'customer', loans: 'credit sale' };
-  const entity = names[seg[0]] || seg[0];
-  const hasId = seg[1] && /^\d+$/.test(seg[1]);
-  if (method === 'POST' && !hasId) return `Created a ${entity}`;
-  const verb = method === 'DELETE' ? 'Deleted' : method === 'POST' ? 'Created' : 'Updated';
-  return `${verb} ${entity}${hasId ? ' #' + seg[1] : ''}`;
-}
-
-function actionBadge(method) {
-  const cls = { POST: 'badge-ok', DELETE: 'badge-empty', PUT: 'badge-category', PATCH: 'badge-category' }[method] || 'badge-category';
-  const label = { POST: 'Create', DELETE: 'Delete', PUT: 'Update', PATCH: 'Update' }[method] || method;
-  return `<span class="badge ${cls}">${label}</span>`;
-}
-
-async function load() {
+async function loadSales(period) {
   try {
-    const rows = await api.getActivity() || [];
-    const tbody = document.getElementById('activity-table-body');
-    document.getElementById('record-count').textContent = `${rows.length} event${rows.length === 1 ? '' : 's'}`;
+    const s = await api.getSales(period);
+    document.getElementById('kpi-units').textContent = (s.total_units || 0).toLocaleString('en-US');
+    document.getElementById('kpi-revenue').textContent = money(s.total_revenue);
+    document.getElementById('kpi-tx').textContent = (s.transactions || 0).toLocaleString('en-US');
+
+    const body = document.getElementById('top-body');
+    const rows = s.top_parts || [];
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
-        <h3>No activity yet</h3><p>Changes will appear here as they happen.</p></div></td></tr>`;
+      body.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:28px;color:var(--text-muted);">No sales in this period yet.</td></tr>`;
       return;
     }
-    tbody.innerHTML = rows.map(r => `
+    body.innerHTML = rows.map(p => `
       <tr>
-        <td style="color:var(--text-secondary);white-space:nowrap;">${fmtTime(r.timestamp)}</td>
-        <td><span class="cell-name">${r.username || 'unknown'}</span></td>
-        <td>${actionBadge(r.method)} <span style="margin-left:6px;">${describe(r.method, r.path)}</span></td>
+        <td style="color:var(--link);font-weight:600;white-space:nowrap;">${p.part_number || '–'}</td>
+        <td>${p.name || ''}</td>
+        <td class="num">${(p.units || 0).toLocaleString('en-US')}</td>
+        <td class="num">${money(p.revenue)}</td>
       </tr>`).join('');
   } catch (err) {
-    toast('Failed to load activity: ' + err.message, 'error');
+    if (window.toast) toast('Could not load sales: ' + err.message, 'error');
   }
 }
 
-document.getElementById('refresh-btn').addEventListener('click', load);
-load();
+document.getElementById('period-bar').addEventListener('click', (e) => {
+  const btn = e.target.closest('.period-btn');
+  if (!btn) return;
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadSales(btn.dataset.period);
+});
+
+loadSales('month');
 </script>
 </body>
 </html>

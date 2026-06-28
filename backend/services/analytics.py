@@ -14,10 +14,12 @@ Pandas → used for data manipulation (grouping parts by category, aggregating)
 import numpy as np
 import pandas as pd
 from scipy import stats
+from datetime import datetime, timedelta
 from typing import List, Dict, Any
 from sqlalchemy.orm import Session
 from backend.models.part import Part
-from backend.models.order import Order
+from backend.models.order import Order, OrderStatus
+from backend.models.loan import Loan
 
 
 def _price(v) -> float:
@@ -173,4 +175,72 @@ def get_inventory_summary(db: Session) -> Dict[str, Any]:
         "low_stock": sum(1 for p in parts if p.stock_quantity <= p.low_stock_threshold),
         "out_of_stock": sum(1 for p in parts if p.stock_quantity == 0),
         "total_on_loan": sum(p.loaned_quantity for p in parts),
+    }
+
+
+def _naive(dt):
+    """Drop timezone info so SQLite (naive) and Postgres (aware) compare alike."""
+    if dt is None:
+        return None
+    return dt.replace(tzinfo=None) if getattr(dt, "tzinfo", None) else dt
+
+
+def get_sales_summary(db: Session, period: str = "month") -> Dict[str, Any]:
+    """Units sold and revenue from delivered orders + paid credit sales.
+
+    period: 'today' | 'week' | 'month' | 'all'. A sale counts on the day the
+    order was delivered, or the day a credit sale was paid.
+    """
+    now = datetime.utcnow()
+    cutoff = None
+    if period == "today":
+        cutoff = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif period == "week":
+        cutoff = now - timedelta(days=7)
+    elif period == "month":
+        cutoff = now - timedelta(days=30)
+
+    rows = []  # one entry per sold line
+    for o in db.query(Order).filter(Order.status == OrderStatus.LEVERT).all():
+        d = _naive(o.order_date)
+        if cutoff and (d is None or d < cutoff):
+            continue
+        rows.append({
+            "part_id": o.part_id,
+            "name": o.part.name if o.part else f"#{o.part_id}",
+            "part_number": o.part.part_number if o.part else "",
+            "units": o.quantity or 0,
+            "revenue": _price(o.unit_price_at_order) * (o.quantity or 0),
+            "kind": "order",
+        })
+    for l in db.query(Loan).filter(Loan.status == "paid").all():
+        d = _naive(l.returned_date) or _naive(l.loan_date)
+        if cutoff and (d is None or d < cutoff):
+            continue
+        rows.append({
+            "part_id": l.part_id,
+            "name": l.part.name if l.part else f"#{l.part_id}",
+            "part_number": l.part.part_number if l.part else "",
+            "units": l.quantity or 0,
+            "revenue": _price(l.loan_price) * (l.quantity or 0),
+            "kind": "credit",
+        })
+
+    by_part = {}
+    for r in rows:
+        b = by_part.setdefault(r["part_id"], {
+            "name": r["name"], "part_number": r["part_number"], "units": 0, "revenue": 0.0,
+        })
+        b["units"] += r["units"]
+        b["revenue"] += r["revenue"]
+    top_parts = sorted(by_part.values(), key=lambda x: x["revenue"], reverse=True)[:10]
+    for b in top_parts:
+        b["revenue"] = round(b["revenue"], 2)
+
+    return {
+        "period": period,
+        "total_units": sum(r["units"] for r in rows),
+        "total_revenue": round(sum(r["revenue"] for r in rows), 2),
+        "transactions": len(rows),
+        "top_parts": top_parts,
     }

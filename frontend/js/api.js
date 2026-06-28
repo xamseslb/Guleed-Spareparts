@@ -296,6 +296,10 @@ export const api = {
     return request('GET', `/api/analytics/order-trend?days=${days}`);
   },
 
+  async getSales(period = 'month') {
+    return request('GET', `/api/analytics/sales?period=${period}`);
+  },
+
   // ─── Loans ──────────────────────────────────────────────────────
   async getLoans(filters = {}) {
     const params = new URLSearchParams(filters);

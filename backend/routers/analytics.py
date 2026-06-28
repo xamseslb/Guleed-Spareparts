@@ -34,3 +34,13 @@ def get_order_trend(
 ):
     """Sales trend calculated with SciPy linear regression."""
     return analytics.get_order_trend(db, days=days)
+
+
+@router.get("/sales")
+def get_sales(
+    period: str = "month",
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Units sold and revenue (delivered orders + paid credit sales)."""
+    return analytics.get_sales_summary(db, period=period)
