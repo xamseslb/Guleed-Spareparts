@@ -143,7 +143,13 @@ def create_part(data: PartCreate, db: Session = Depends(get_db), current_user: U
     if existing:
         raise HTTPException(status_code=400, detail=f"Part number '{data.part_number}' already exists")
 
-    part = Part(**data.model_dump())
+    d = data.model_dump()
+    # Fill in blanks so a part can be added with just a part number now and
+    # named/categorised/priced later.
+    d["name"] = (d.get("name") or "").strip() or d["part_number"]
+    d["category"] = (d.get("category") or "").strip() or "Uncategorized"
+    d["unit_price"] = d.get("unit_price") or 0.0
+    part = Part(**d)
     part.compatible_cars = [c.model_dump() for c in data.compatible_cars]
     part.images = []
     db.add(part)
@@ -337,13 +343,13 @@ async def import_parts(
                 break
     df = df.rename(columns=rename)
 
-    required = ["part_number", "name", "category", "unit_price"]
-    missing = [c for c in required if c not in df.columns]
-    if missing:
+    # Only the part number is required. Name, category and price can be filled
+    # in later, so a row with just a part number (and maybe a stock count) is
+    # enough to get it into the system.
+    if "part_number" not in df.columns:
         raise HTTPException(
             status_code=400,
-            detail=f"Missing required column(s): {', '.join(missing)}. "
-                   "The file needs columns for part number, name, category and price.",
+            detail="The file needs a column for the part number (e.g. 'part_number' or 'varenummer').",
         )
 
     existing = {r[0] for r in db.query(Part.part_number).all()}
@@ -353,18 +359,18 @@ async def import_parts(
         rownum = int(i) + 2  # +1 for header, +1 for 1-based
         try:
             pn = _opt_str(row.get("part_number"))
-            name = _opt_str(row.get("name"))
-            category = _opt_str(row.get("category"))
             if not pn:
                 errors.append({"row": rownum, "reason": "missing part number"}); continue
-            if not name or not category:
-                errors.append({"row": rownum, "reason": "missing name or category"}); continue
             if pn in existing or pn in seen:
                 skipped += 1; continue
+            # Fill in sensible placeholders for anything left blank – the shop
+            # can complete name, category and price later by editing the part.
+            name = _opt_str(row.get("name")) or pn        # fall back to the part number
+            category = _opt_str(row.get("category")) or "Uncategorized"
             try:
                 price = float(row.get("unit_price"))
             except (ValueError, TypeError):
-                errors.append({"row": rownum, "reason": "invalid price"}); continue
+                price = 0.0                                # unknown price for now
 
             db.add(Part(
                 part_number=pn, name=name, category=category, unit_price=price,

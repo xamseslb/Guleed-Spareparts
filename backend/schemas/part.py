@@ -28,15 +28,17 @@ class CarCompatibility(BaseModel):
 # All required fields must be provided, optional ones have defaults
 class PartCreate(BaseModel):
     part_number: str = Field(..., min_length=1, max_length=50, example="BR-8690")
-    name: str = Field(..., min_length=1, max_length=200, example="Front Brake Pads (Set)")
+    # Only the part number is required. Name/category/price can be filled in
+    # later – the backend supplies sensible defaults when they're left blank.
+    name: Optional[str] = Field(None, max_length=200, example="Front Brake Pads (Set)")
     description: Optional[str] = Field(None, example="Fits Toyota Corolla 2010-2022")
-    category: str = Field(..., example="Brakes")
+    category: Optional[str] = Field(None, max_length=100, example="Brakes")
     compatible_cars: List[CarCompatibility] = Field(default_factory=list)  # starts as empty list
     stock_quantity: int = Field(0, ge=0)       # ge=0 means must be 0 or greater
     ordered_quantity: int = Field(0, ge=0)
     loaned_quantity: int = Field(0, ge=0)
     low_stock_threshold: int = Field(5, ge=0)
-    unit_price: float = Field(..., gt=0, example=899.0)  # gt=0 means must be greater than 0
+    unit_price: Optional[float] = Field(None, ge=0, example=899.0)  # blank → 0
     location: Optional[str] = Field(None, example="Shelf B, Row 04")
 
 
