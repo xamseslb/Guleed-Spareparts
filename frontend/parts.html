@@ -16,6 +16,24 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
 </head>
 <body>
+<div id="app-loading" aria-hidden="true">
+  <img src="icons/icon-192.png" alt="">
+  <div class="al-text">Loading Guuleed Spareparts…</div>
+  <div class="al-spin"></div>
+</div>
+<style>
+#app-loading{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#21303f;opacity:0;pointer-events:none;transition:opacity .2s}
+#app-loading.show{opacity:1;pointer-events:auto}
+#app-loading img{width:60px;height:60px;border-radius:14px}
+#app-loading .al-text{color:#cbd2dd;font:500 14px system-ui,Segoe UI,Roboto,Arial,sans-serif}
+#app-loading .al-spin{width:24px;height:24px;border:3px solid rgba(255,255,255,.22);border-top-color:#e67e22;border-radius:50%;animation:alspin .8s linear infinite}
+@keyframes alspin{to{transform:rotate(360deg)}}
+</style>
+<script>
+(function(){var t=setTimeout(function(){var l=document.getElementById('app-loading');if(l)l.classList.add('show')},350);
+function hide(){clearTimeout(t);var l=document.getElementById('app-loading');if(l){l.classList.remove('show');setTimeout(function(){if(l&&l.parentNode)l.parentNode.removeChild(l)},220)}}
+document.addEventListener('DOMContentLoaded',hide);window.addEventListener('load',hide);setTimeout(hide,12000)})();
+</script>
 <div class="layout">
 
   <!-- ─── Sidebar ───────────────────────────────────────────────── -->

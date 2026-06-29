@@ -1,9 +1,10 @@
 /* Service worker – makes the app shell available offline.
-   Strategy: network-first for the shell (so deploys show up immediately),
-   falling back to the cache when offline. API data is cached separately by
-   api.js in localStorage; we deliberately don't cache /api/ here. */
+   Strategy: stale-while-revalidate for the shell – serve the cached page
+   instantly (no white screen while the server wakes up), then refresh the
+   cache in the background so the next load is up to date. API data is cached
+   separately by api.js in localStorage; we deliberately don't cache /api/. */
 
-const CACHE = 'guleed-v7';
+const CACHE = 'guleed-v8';
 const SHELL = [
   './login.html',
   './index.html',
@@ -45,13 +46,19 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   if (url.pathname.startsWith('/api/')) return;  // data is cached by api.js, not here
 
+  // Stale-while-revalidate: serve the cached shell instantly (so there's no
+  // white screen even when the server is asleep/waking up), then refresh the
+  // cache in the background for next time.
   e.respondWith(
-    fetch(req)
-      .then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(req, copy));
-        return res;
-      })
-      .catch(() => caches.match(req).then((cached) => cached || caches.match('./login.html')))
+    caches.match(req).then((cached) => {
+      const network = fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+          return res;
+        })
+        .catch(() => cached || caches.match('./login.html'));
+      return cached || network;
+    })
   );
 });
