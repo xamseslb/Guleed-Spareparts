@@ -106,13 +106,14 @@ input, select, textarea { font-family: var(--font); }
   border-bottom: 1px solid rgba(255,255,255,.06);
 }
 .logo-mark {
-  width: 28px; height: 28px;
-  background: var(--accent);
+  width: 30px; height: 30px;
   border-radius: var(--radius-sm);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
 }
 .logo-mark svg { width: 16px; height: 16px; color: #fff; }
+.logo-mark img { width: 30px; height: 30px; display: block; }
 .logo-text-wrap strong { display: block; font-size: 13px; font-weight: 600; color: #fff; line-height: 1.2; }
 .logo-text-wrap span { font-size: 11px; color: var(--sidebar-text); }
 
@@ -647,12 +648,13 @@ input, select, textarea { font-family: var(--font); }
   margin-bottom: 32px;
 }
 .login-brand .brand-mark {
-  width: 32px; height: 32px;
-  background: var(--accent);
+  width: 36px; height: 36px;
   border-radius: var(--radius);
   display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
 }
 .login-brand .brand-mark svg { width: 18px; height: 18px; color: #fff; }
+.login-brand .brand-mark img { width: 36px; height: 36px; display: block; }
 .login-brand strong { font-size: 15px; font-weight: 700; color: var(--text-primary); }
 .login-heading { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
 .login-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
