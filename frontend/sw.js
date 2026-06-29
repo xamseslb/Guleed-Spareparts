@@ -3,7 +3,7 @@
    falling back to the cache when offline. API data is cached separately by
    api.js in localStorage; we deliberately don't cache /api/ here. */
 
-const CACHE = 'guleed-v5';
+const CACHE = 'guleed-v6';
 const SHELL = [
   './login.html',
   './index.html',
@@ -21,6 +21,8 @@ const SHELL = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
+  './icons/favicon.png',
+  './img/logo.png',
 ];
 
 self.addEventListener('install', (e) => {

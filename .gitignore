@@ -9,3 +9,6 @@ env/
 .env
 .vscode/
 .idea/
+
+# Windows folder metadata
+desktop.ini
