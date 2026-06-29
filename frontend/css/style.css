@@ -633,7 +633,7 @@ input, select, textarea { font-family: var(--font); }
   justify-content: flex-end;
   padding: 5vw 7vw;
   background: #ffffff url('../img/logo.png') no-repeat center center;
-  background-size: cover;   /* the whole logo fills the page */
+  background-size: contain;   /* show the whole logo, sharp; white blends with the page */
 }
 .login-card {
   width: 100%;
