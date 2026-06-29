@@ -766,6 +766,11 @@ input, select, textarea { font-family: var(--font); }
   table.cards-sm td[data-label="Name"] { flex-direction: column; align-items: stretch; text-align: left; }
   table.cards-sm td[data-label="Name"]::before { display: none; }
   table.cards-sm td[data-label="Name"] .cell-name { font-size: 15px; }
+  /* Multi-line cells (the part and the customer) stack their label on top. */
+  table.cards-sm td[data-label="Part"],
+  table.cards-sm td[data-label="Customer"] { flex-direction: column; align-items: stretch; text-align: left; }
+  /* Hide blank cells so collapsed/expanded receipt rows don't show empty gaps. */
+  table.cards-sm td:empty { display: none; }
   /* The actions cell has no label – right-align its buttons in the card. */
-  table.cards-sm td.card-actions { display: flex; justify-content: flex-end; }
+  table.cards-sm td.card-actions { display: flex; justify-content: flex-end; gap: 6px; }
 }

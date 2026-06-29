@@ -136,7 +136,7 @@
 
       <!-- Table -->
       <div class="table-wrap">
-        <table class="data-table" aria-label="Loans">
+        <table class="data-table cards-sm" aria-label="Loans">
           <thead>
             <tr>
               <th>#</th>
@@ -470,16 +470,16 @@ function renderTable(loans) {
     if (items.length === 1) {
       const l = items[0];
       html += `<tr>
-        <td class="cell-part-number">#${l.id}${l.group_ref ? `<div style="font-size:10px;color:var(--text-muted);font-weight:400;">🧾 ${l.group_ref.slice(0, 7)}</div>` : ''}</td>
-        <td>${customerCell(l)}</td><td>${partCell(l)}</td>
-        <td class="stock-num">${l.quantity}</td>
-        <td class="date-cell">$${l.loan_price.toLocaleString('en-US')}</td>
-        <td><span class="stock-num">$${l.total_price.toLocaleString('en-US')}</span></td>
-        <td>${employeeCell(l)}</td>
-        <td class="date-cell">${fmtDate(l.loan_date)}</td>
-        <td class="date-cell">${payByCell(l)}</td>
-        <td>${statusBadge(l.status)}</td>
-        <td>${actions(l)}</td></tr>`;
+        <td class="cell-part-number" data-label="Sale">#${l.id}${l.group_ref ? `<div style="font-size:10px;color:var(--text-muted);font-weight:400;">🧾 ${l.group_ref.slice(0, 7)}</div>` : ''}</td>
+        <td data-label="Customer">${customerCell(l)}</td><td data-label="Part">${partCell(l)}</td>
+        <td class="stock-num" data-label="Qty">${l.quantity}</td>
+        <td class="date-cell" data-label="Price / unit">$${l.loan_price.toLocaleString('en-US')}</td>
+        <td data-label="Total"><span class="stock-num">$${l.total_price.toLocaleString('en-US')}</span></td>
+        <td data-label="Employee">${employeeCell(l)}</td>
+        <td class="date-cell" data-label="Loan Date">${fmtDate(l.loan_date)}</td>
+        <td class="date-cell" data-label="Payment by">${payByCell(l)}</td>
+        <td data-label="Status">${statusBadge(l.status)}</td>
+        <td class="card-actions">${actions(l)}</td></tr>`;
     } else {
       const f = items[0];
       const total = items.reduce((s, x) => s + (x.total_price || 0), 0);
@@ -487,30 +487,30 @@ function renderTable(loans) {
       const anyUnpaid = items.some(x => x.status !== 'paid');
       const gStatus = anyUnpaid ? (items.some(x => x.status === 'overdue') ? 'overdue' : 'unpaid') : 'paid';
       html += `<tr style="cursor:pointer;" onclick="toggleGroup('${key}')">
-        <td class="cell-part-number"><span id="chev-${key}">▸</span> <span style="font-weight:400;color:var(--text-muted);font-size:10px;">🧾 ${key.slice(0, 7)}</span></td>
-        <td>${customerCell(f)}</td>
-        <td><span class="cell-name">${items.length} parts</span> <span class="cell-desc">click to expand</span></td>
-        <td class="stock-num">${qty}</td>
-        <td class="date-cell">–</td>
-        <td><span class="stock-num">$${total.toLocaleString('en-US')}</span></td>
-        <td>${employeeCell(f)}</td>
-        <td class="date-cell">${fmtDate(f.loan_date)}</td>
-        <td class="date-cell">${payByCell(f)}</td>
-        <td>${statusBadge(gStatus)}</td>
-        <td onclick="event.stopPropagation()"><div class="cell-actions">
+        <td class="cell-part-number" data-label="Sale"><span id="chev-${key}">▸</span> <span style="font-weight:400;color:var(--text-muted);font-size:10px;">🧾 ${key.slice(0, 7)}</span></td>
+        <td data-label="Customer">${customerCell(f)}</td>
+        <td data-label="Part"><span class="cell-name">${items.length} parts</span> <span class="cell-desc">click to expand</span></td>
+        <td class="stock-num" data-label="Qty">${qty}</td>
+        <td class="date-cell" data-label="Price / unit">–</td>
+        <td data-label="Total"><span class="stock-num">$${total.toLocaleString('en-US')}</span></td>
+        <td data-label="Employee">${employeeCell(f)}</td>
+        <td class="date-cell" data-label="Loan Date">${fmtDate(f.loan_date)}</td>
+        <td class="date-cell" data-label="Payment by">${payByCell(f)}</td>
+        <td data-label="Status">${statusBadge(gStatus)}</td>
+        <td class="card-actions" onclick="event.stopPropagation()"><div class="cell-actions">
           ${anyUnpaid ? `<button class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="payGroup('${key}')">Mark paid</button>` : ''}
           <button class="btn-icon danger" onclick="deleteGroup('${key}')" title="Delete whole sale">${TRASH}</button>
         </div></td></tr>`;
       items.forEach(l => {
         html += `<tr class="gc-${key}" style="display:none;background:var(--surface-2);">
-          <td style="color:var(--text-muted);padding-left:24px;">↳ #${l.id}</td>
-          <td></td><td>${partCell(l)}</td>
-          <td class="stock-num">${l.quantity}</td>
-          <td class="date-cell">$${l.loan_price.toLocaleString('en-US')}</td>
-          <td><span class="stock-num">$${l.total_price.toLocaleString('en-US')}</span></td>
+          <td style="color:var(--text-muted);padding-left:24px;" data-label="Sale">↳ #${l.id}</td>
+          <td></td><td data-label="Part">${partCell(l)}</td>
+          <td class="stock-num" data-label="Qty">${l.quantity}</td>
+          <td class="date-cell" data-label="Price / unit">$${l.loan_price.toLocaleString('en-US')}</td>
+          <td data-label="Total"><span class="stock-num">$${l.total_price.toLocaleString('en-US')}</span></td>
           <td></td><td></td><td></td>
-          <td>${statusBadge(l.status)}</td>
-          <td>${actions(l)}</td></tr>`;
+          <td data-label="Status">${statusBadge(l.status)}</td>
+          <td class="card-actions">${actions(l)}</td></tr>`;
       });
     }
   });

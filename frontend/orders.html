@@ -122,7 +122,7 @@
 
       <!-- Table -->
       <div class="table-wrap">
-        <table class="data-table">
+        <table class="data-table cards-sm">
           <thead>
             <tr>
               <th>Order ID</th>
@@ -391,39 +391,39 @@ function renderTable(orders) {
     if (items.length === 1) {
       const o = items[0];
       html += `<tr>
-        <td class="cell-part-number">#${o.id}${o.group_ref ? `<div style="font-size:10px;color:var(--text-muted);font-weight:400;">🧾 ${o.group_ref.slice(0, 7)}</div>` : ''}</td>
-        <td style="font-size:13px;">${custCell(o)}</td>
-        <td>${partCell(o)}</td>
-        <td class="stock-num">${o.quantity}</td>
-        <td style="color:var(--text-secondary);">${priceCell(o.unit_price)}</td>
-        <td><span class="stock-num">${priceCell(o.total_price)}</span></td>
-        <td>${statusBadge(o.status)}</td>
-        <td style="color:var(--text-muted);font-size:12px;">${dateCell(o)}</td>
-        <td>${rowActions(o)}</td></tr>`;
+        <td class="cell-part-number" data-label="Order">#${o.id}${o.group_ref ? `<div style="font-size:10px;color:var(--text-muted);font-weight:400;">🧾 ${o.group_ref.slice(0, 7)}</div>` : ''}</td>
+        <td style="font-size:13px;" data-label="Customer">${custCell(o)}</td>
+        <td data-label="Part">${partCell(o)}</td>
+        <td class="stock-num" data-label="Qty">${o.quantity}</td>
+        <td style="color:var(--text-secondary);" data-label="Unit Price">${priceCell(o.unit_price)}</td>
+        <td data-label="Total"><span class="stock-num">${priceCell(o.total_price)}</span></td>
+        <td data-label="Status">${statusBadge(o.status)}</td>
+        <td style="color:var(--text-muted);font-size:12px;" data-label="Date">${dateCell(o)}</td>
+        <td class="card-actions">${rowActions(o)}</td></tr>`;
     } else {
       const f = items[0];
       const total = items.reduce((s, x) => s + (x.total_price || 0), 0);
       const qty = items.reduce((s, x) => s + (x.quantity || 0), 0);
       html += `<tr style="cursor:pointer;" onclick="toggleGroup('${key}')">
-        <td class="cell-part-number"><span id="chev-${key}">▸</span> <span style="font-weight:400;color:var(--text-muted);font-size:10px;">🧾 ${key.slice(0, 7)}</span></td>
-        <td style="font-size:13px;">${custCell(f)}</td>
-        <td><span class="cell-name">${items.length} parts</span> <span class="cell-desc">click to expand</span></td>
-        <td class="stock-num">${qty}</td>
-        <td style="color:var(--text-secondary);">–</td>
-        <td><span class="stock-num">$${total.toLocaleString('en-US')}</span></td>
-        <td>${statusBadge(f.status)}</td>
-        <td style="color:var(--text-muted);font-size:12px;">${dateCell(f)}</td>
-        <td onclick="event.stopPropagation()"><div class="cell-actions"><button class="btn-icon danger" onclick="deleteGroup('${key}')" title="Delete whole purchase">${TRASH}</button></div></td></tr>`;
+        <td class="cell-part-number" data-label="Order"><span id="chev-${key}">▸</span> <span style="font-weight:400;color:var(--text-muted);font-size:10px;">🧾 ${key.slice(0, 7)}</span></td>
+        <td style="font-size:13px;" data-label="Customer">${custCell(f)}</td>
+        <td data-label="Part"><span class="cell-name">${items.length} parts</span> <span class="cell-desc">click to expand</span></td>
+        <td class="stock-num" data-label="Qty">${qty}</td>
+        <td style="color:var(--text-secondary);" data-label="Unit Price">–</td>
+        <td data-label="Total"><span class="stock-num">$${total.toLocaleString('en-US')}</span></td>
+        <td data-label="Status">${statusBadge(f.status)}</td>
+        <td style="color:var(--text-muted);font-size:12px;" data-label="Date">${dateCell(f)}</td>
+        <td class="card-actions" onclick="event.stopPropagation()"><div class="cell-actions"><button class="btn-icon danger" onclick="deleteGroup('${key}')" title="Delete whole purchase">${TRASH}</button></div></td></tr>`;
       items.forEach(o => {
         html += `<tr class="gc-${key}" style="display:none;background:var(--surface-2);">
-          <td style="color:var(--text-muted);padding-left:24px;">↳ #${o.id}</td>
-          <td></td><td>${partCell(o)}</td>
-          <td class="stock-num">${o.quantity}</td>
-          <td style="color:var(--text-secondary);">${priceCell(o.unit_price)}</td>
-          <td><span class="stock-num">${priceCell(o.total_price)}</span></td>
-          <td>${statusBadge(o.status)}</td>
+          <td style="color:var(--text-muted);padding-left:24px;" data-label="Order">↳ #${o.id}</td>
+          <td></td><td data-label="Part">${partCell(o)}</td>
+          <td class="stock-num" data-label="Qty">${o.quantity}</td>
+          <td style="color:var(--text-secondary);" data-label="Unit Price">${priceCell(o.unit_price)}</td>
+          <td data-label="Total"><span class="stock-num">${priceCell(o.total_price)}</span></td>
+          <td data-label="Status">${statusBadge(o.status)}</td>
           <td></td>
-          <td>${rowActions(o)}</td></tr>`;
+          <td class="card-actions">${rowActions(o)}</td></tr>`;
       });
     }
   });
