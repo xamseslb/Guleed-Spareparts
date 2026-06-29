@@ -632,8 +632,9 @@ input, select, textarea { font-family: var(--font); }
   align-items: center;
   justify-content: flex-end;
   padding: 5vw 7vw;
-  background: #ffffff url('../img/logo.png') no-repeat center center;
-  background-size: contain;   /* show the whole logo, sharp; white blends with the page */
+  /* Logo sits on the left; the form floats on the right with no overlap. */
+  background: #ffffff url('../img/logo.png') no-repeat 6% center;
+  background-size: auto min(560px, 80vh);
 }
 .login-card {
   width: 100%;

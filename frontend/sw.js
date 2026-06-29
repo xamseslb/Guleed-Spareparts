@@ -3,7 +3,7 @@
    falling back to the cache when offline. API data is cached separately by
    api.js in localStorage; we deliberately don't cache /api/ here. */
 
-const CACHE = 'guleed-v6';
+const CACHE = 'guleed-v7';
 const SHELL = [
   './login.html',
   './index.html',
