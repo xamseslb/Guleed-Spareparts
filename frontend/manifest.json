@@ -1,7 +1,7 @@
 {
-  "name": "Guleed Spareparts",
-  "short_name": "Guleed",
-  "description": "Inventory, orders and sales for Guleed Spareparts",
+  "name": "Guuleed Spareparts",
+  "short_name": "Guuleed",
+  "description": "Inventory, orders and sales for Guuleed Spareparts",
   "start_url": "index.html",
   "scope": "./",
   "display": "standalone",

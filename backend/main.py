@@ -46,8 +46,8 @@ ensure_admin()
 # Step 3: Create the FastAPI application.
 # Interactive API docs are disabled in production to avoid exposing the API surface.
 app = FastAPI(
-    title="Guleed Spareparts API",
-    description="Inventory management system for Guleed Spareparts auto parts store",
+    title="Guuleed Spareparts API",
+    description="Inventory management system for Guuleed Spareparts auto parts store",
     version="1.0.0",
     docs_url=None if IS_PRODUCTION else "/docs",
     redoc_url=None if IS_PRODUCTION else "/redoc",

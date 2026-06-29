@@ -1,5 +1,5 @@
 /**
- * api.js – All kommunikasjon med Guleed Spareparts API.
+ * api.js – All kommunikasjon med Guuleed Spareparts API.
  */
 
 // Use the same origin the page was served from (e.g. http://127.0.0.1:8000),

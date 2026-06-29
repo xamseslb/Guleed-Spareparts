@@ -110,7 +110,7 @@ def import_template(current_user: User = Depends(get_current_user)):
         cell.fill = header_fill
         cell.font = header_font
         cell.alignment = Alignment(horizontal="center")
-        cell.comment = Comment("Required" if required else "Optional — may be left blank", "Guleed")
+        cell.comment = Comment("Required" if required else "Optional — may be left blank", "Guuleed")
         ws.column_dimensions[cell.column_letter].width = max(14, len(field) + 4)
 
     for r, example in enumerate(example_rows, start=2):
