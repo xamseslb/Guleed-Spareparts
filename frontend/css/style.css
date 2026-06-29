@@ -694,6 +694,27 @@ input, select, textarea { font-family: var(--font); }
 .feature-item strong { display: block; font-size: 13px; font-weight: 500; color: #d4d8e2; }
 .feature-item span { font-size: 12px; color: var(--sidebar-text); line-height: 1.5; }
 
+/* ─── Login: branded hero + form ─────────────────────────────────── */
+.login-left { background: var(--surface); }
+.login-hero {
+  flex: 1.05;
+  background: var(--sidebar-bg);
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px; position: relative; overflow: hidden;
+}
+.login-hero::before {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(circle at 28% 30%, rgba(230,126,34,.14), transparent 62%);
+}
+.login-hero-inner { position: relative; text-align: center; max-width: 360px; }
+.login-hero-logo {
+  width: 100%; max-width: 320px; height: auto; display: block; margin: 0 auto;
+  background: #fff; border-radius: 16px; padding: 22px;
+  box-shadow: 0 20px 50px rgba(0,0,0,.35);
+}
+.login-hero-tag { margin-top: 22px; color: var(--sidebar-text); font-size: 14px; line-height: 1.6; }
+.login-card-logo { display: none; width: 160px; height: auto; margin: 0 auto 22px; }
+
 /* ─── Offline / sync banner ───────────────────────────────────────── */
 .offline-banner {
   position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
@@ -714,6 +735,8 @@ input, select, textarea { font-family: var(--font); }
 @media (max-width: 1100px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 900px) {
   .login-right { display: none; }
+  .login-hero { display: none; }
+  .login-card-logo { display: block; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 640px) {
