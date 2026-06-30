@@ -231,6 +231,8 @@ input, select, textarea { font-family: var(--font); }
 .btn-primary:hover { background: var(--accent-hover); }
 .btn-secondary { background: var(--surface); color: var(--text-primary); border: 1px solid var(--border); box-shadow: var(--shadow-xs); }
 .btn-secondary:hover { background: var(--bg); border-color: var(--border-strong); }
+/* "Edit details" in the part popup highlights light-blue on hover */
+#choose-edit:hover { background: var(--accent-light); border-color: var(--accent-border); color: var(--link); }
 .btn-danger { background: var(--red); color: #fff; }
 .btn-danger:hover { background: #b91c1c; }
 
