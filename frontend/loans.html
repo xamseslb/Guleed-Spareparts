@@ -221,6 +221,7 @@ document.addEventListener('DOMContentLoaded',hide);window.addEventListener('load
         </div>
 
         <div class="section-divider" style="margin-top:14px;">Parts in this sale</div>
+        <datalist id="parts-datalist"></datalist>
         <div id="loan-lines"></div>
         <button type="button" class="btn btn-secondary" id="add-line-btn" style="margin-top:4px;padding:6px 12px;font-size:12px;">+ Add another part</button>
         <div id="loan-total" style="text-align:right;font-weight:650;font-size:15px;margin-top:12px;color:var(--text-primary);"></div>
@@ -301,7 +302,8 @@ function fmtDate(dt) {
 }
 
 let partsData = [];
-let partOptionsHTML = '<option value="">Select part…</option>';
+let partLabelToId = {};   // "81551-90k09 – Name (9 available)" -> id
+let partIdToLabel = {};   // id -> label (for pre-filling an existing line)
 
 // ── Cart lines: sell several parts in one credit sale ─────────────────
 function unitPrice(partId) {
@@ -310,7 +312,7 @@ function unitPrice(partId) {
 }
 function lineData() {
   return [...document.querySelectorAll('#loan-lines .order-line')].map(r => ({
-    part_id: parseInt(r.querySelector('.line-part').value) || 0,
+    part_id: partLabelToId[r.querySelector('.line-part').value.trim()] || 0,
     quantity: parseInt(r.querySelector('.line-qty').value) || 0,
   }));
 }
@@ -326,7 +328,7 @@ function addLine(partId = '', qty = 1) {
   row.innerHTML = `
     <div class="form-group" style="flex:1;min-width:0;">
       <label class="form-label">Part *</label>
-      <select class="form-select line-part">${partOptionsHTML}</select>
+      <input class="form-input line-part" list="parts-datalist" placeholder="Type part number or name…" autocomplete="off">
     </div>
     <div class="form-group" style="width:84px;">
       <label class="form-label">Qty</label>
@@ -336,8 +338,8 @@ function addLine(partId = '', qty = 1) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>`;
   wrap.appendChild(row);
-  row.querySelector('.line-part').value = partId;
-  row.querySelector('.line-part').addEventListener('change', updateTotal);
+  if (partId) row.querySelector('.line-part').value = partIdToLabel[partId] || '';
+  row.querySelector('.line-part').addEventListener('input', updateTotal);
   row.querySelector('.line-qty').addEventListener('input', updateTotal);
   row.querySelector('.line-remove').addEventListener('click', () => {
     if (wrap.querySelectorAll('.order-line').length > 1) { row.remove(); updateTotal(); }
@@ -366,11 +368,15 @@ async function loadDropdowns() {
     });
 
     partsData = parts || [];
-    partOptionsHTML = '<option value="">Select part…</option>' +
-      partsData.map(p => {
-        const avail = p.stock_quantity - p.loaned_quantity;
-        return `<option value="${p.id}"${avail <= 0 ? ' disabled' : ''}>${p.part_number} – ${p.name} (${avail} available)</option>`;
-      }).join('');
+    partLabelToId = {}; partIdToLabel = {};
+    const dl = document.getElementById('parts-datalist');
+    dl.innerHTML = partsData.map(p => {
+      const avail = p.stock_quantity - p.loaned_quantity;
+      const label = `${p.part_number} – ${p.name} (${avail} available)`;
+      partLabelToId[label] = p.id;
+      partIdToLabel[p.id] = label;
+      return `<option value="${label.replace(/"/g, '&quot;')}"></option>`;
+    }).join('');
 
     const empSel = document.getElementById('f-employee');
     employees.forEach(e => {
@@ -608,6 +614,11 @@ document.getElementById('modal-save').addEventListener('click', async () => {
   const lines = lineData().filter(l => l.part_id);
 
   if (!customer_id || !employee_name) { toast('Choose a customer and the employee present', 'error'); return; }
+  const unmatched = [...document.querySelectorAll('#loan-lines .order-line')].some(r => {
+    const v = r.querySelector('.line-part').value.trim();
+    return v && !partLabelToId[v];
+  });
+  if (unmatched) { toast('Pick a part from the suggestions list', 'error'); return; }
   if (!lines.length) { toast('Add at least one part', 'error'); return; }
   if (lines.some(l => !l.quantity || l.quantity < 1)) { toast('Each part needs a quantity of at least 1', 'error'); return; }
 
