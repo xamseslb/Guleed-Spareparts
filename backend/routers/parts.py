@@ -174,6 +174,13 @@ def update_part(
     if "compatible_cars" in update_data and update_data["compatible_cars"] is not None:
         update_data["compatible_cars"] = [c.model_dump() if hasattr(c, "model_dump") else c for c in update_data["compatible_cars"]]
 
+    # If the part number is being changed, make sure no other part already uses it.
+    new_pn = update_data.get("part_number")
+    if new_pn and new_pn != part.part_number:
+        clash = db.query(Part).filter(Part.part_number == new_pn, Part.id != part_id).first()
+        if clash:
+            raise HTTPException(status_code=400, detail=f"Part number '{new_pn}' already exists")
+
     for field, value in update_data.items():
         setattr(part, field, value)
 

@@ -46,6 +46,7 @@ class PartCreate(BaseModel):
 # --- Schema for UPDATING a part (PUT /api/parts/{id}) ---
 # All fields are Optional – you only need to send what you want to change
 class PartUpdate(BaseModel):
+    part_number: Optional[str] = Field(None, min_length=1, max_length=50)
     name: Optional[str] = None
     description: Optional[str] = None
     category: Optional[str] = None
@@ -54,7 +55,7 @@ class PartUpdate(BaseModel):
     ordered_quantity: Optional[int] = Field(None, ge=0)
     loaned_quantity: Optional[int] = Field(None, ge=0)
     low_stock_threshold: Optional[int] = Field(None, ge=0)
-    unit_price: Optional[float] = Field(None, gt=0)
+    unit_price: Optional[float] = Field(None, ge=0)   # 0 allowed (price filled in later)
     location: Optional[str] = None
 
 

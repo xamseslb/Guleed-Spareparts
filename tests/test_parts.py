@@ -138,3 +138,25 @@ def test_bulk_delete_keeps_referenced_parts(client, auth_headers):
     assert len(r.json()["blocked"]) == 1
     # Still there because an order references it
     assert client.get(f"/api/parts/{p['id']}", headers=auth_headers).status_code == 200
+
+
+def test_update_can_change_part_number_and_zero_price(client, auth_headers):
+    # A bare imported part (price 0) – editing it must work, including renaming
+    # the part number and adding a name.
+    p = client.post("/api/parts/", json={"part_number": "RAW-1"}, headers=auth_headers).json()
+    r = client.put(f"/api/parts/{p['id']}", json={
+        "part_number": "BR-9000", "name": "Front Brake Pad", "unit_price": 0,
+    }, headers=auth_headers)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["part_number"] == "BR-9000"
+    assert body["name"] == "Front Brake Pad"
+    assert body["unit_price"] == 0
+
+
+def test_update_rejects_duplicate_part_number(client, auth_headers):
+    client.post("/api/parts/", json={"part_number": "DUP-A", "name": "A"}, headers=auth_headers)
+    b = client.post("/api/parts/", json={"part_number": "DUP-B", "name": "B"}, headers=auth_headers).json()
+    r = client.put(f"/api/parts/{b['id']}", json={"part_number": "DUP-A"}, headers=auth_headers)
+    assert r.status_code == 400
+    assert "already exists" in r.json()["detail"]

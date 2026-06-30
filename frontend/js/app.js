@@ -626,6 +626,14 @@ document.getElementById('choose-loan').addEventListener('click', () => {
   showStep('loan');
 });
 
+// ── Edit details → open the part edit form ──────────────────────────
+document.getElementById('choose-edit').addEventListener('click', () => {
+  if (!selectedPart) return;
+  const id = selectedPart.id;       // capture before closeActionModal clears it
+  closeActionModal();
+  editPart(id);
+});
+
 // ── Confirm Purchase → create order ─────────────────────────────────
 document.getElementById('save-purchase').addEventListener('click', async () => {
   const customer_id = parseInt(document.getElementById('pu-customer').value);
