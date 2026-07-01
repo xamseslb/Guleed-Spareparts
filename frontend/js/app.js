@@ -554,6 +554,7 @@ window.openPartAction = async (partId) => {
 
 // ── Populate customer + employee dropdowns ──────────────────────────
 let dropdownsLoaded = false;
+let puCustomersByName = {};   // lowercase name → id, to resolve a typed purchase customer
 async function loadActionDropdowns() {
   if (dropdownsLoaded) return;
   try {
@@ -562,16 +563,18 @@ async function loadActionDropdowns() {
       api.getEmployees(),
     ]);
 
-    // Purchase customer dropdown
-    const puCust = document.getElementById('pu-customer');
+    // Purchase customer is optional + typeable (datalist); loan stays a required select.
     const loCust = document.getElementById('lo-customer');
-    puCust.innerHTML = '<option value="">Select customer…</option>';
+    const puList = document.getElementById('pu-customers-list');
     loCust.innerHTML = '<option value="">Select customer…</option>';
+    puCustomersByName = {};
+    let puOptions = '';
     customers.forEach(c => {
-      const opt = `<option value="${c.id}">${c.name}${c.phone ? ' – ' + c.phone : ''}</option>`;
-      puCust.insertAdjacentHTML('beforeend', opt);
-      loCust.insertAdjacentHTML('beforeend', opt);
+      loCust.insertAdjacentHTML('beforeend', `<option value="${c.id}">${c.name}${c.phone ? ' – ' + c.phone : ''}</option>`);
+      puCustomersByName[c.name.trim().toLowerCase()] = c.id;
+      puOptions += `<option value="${c.name.replace(/"/g, '&quot;')}">${c.phone || ''}</option>`;
     });
+    if (puList) puList.innerHTML = puOptions;
 
     // Employee dropdown (loans only)
     const loEmp = document.getElementById('lo-employee');
@@ -636,21 +639,27 @@ document.getElementById('choose-edit').addEventListener('click', () => {
 
 // ── Confirm Purchase → create order ─────────────────────────────────
 document.getElementById('save-purchase').addEventListener('click', async () => {
-  const customer_id = parseInt(document.getElementById('pu-customer').value);
-  const quantity    = parseInt(document.getElementById('pu-quantity').value);
-  const notes       = document.getElementById('pu-notes').value.trim();
+  const custVal  = document.getElementById('pu-customer').value.trim();
+  const quantity = parseInt(document.getElementById('pu-quantity').value);
+  const notes    = document.getElementById('pu-notes').value.trim();
 
-  if (!customer_id || !quantity) {
-    toast('Please select a customer and quantity', 'error'); return;
-  }
+  if (!quantity) { toast('Enter a quantity', 'error'); return; }
   const available = selectedPart.stock_quantity - selectedPart.loaned_quantity;
   if (quantity > available) {
     toast(`Only ${available} pcs available`, 'error'); return;
   }
 
+  // Customer is optional: matched name → link it; typed name → store it; empty → walk-in
+  let customer_id = null, customer_name = null;
+  if (custVal) {
+    const matchId = puCustomersByName[custVal.toLowerCase()];
+    if (matchId) customer_id = matchId; else customer_name = custVal;
+  }
+
   try {
     await api.createOrder({
       customer_id,
+      customer_name,
       part_id: selectedPart.id,
       quantity,
       status: 'Delivered',   // a direct purchase is completed immediately

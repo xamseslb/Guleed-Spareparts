@@ -279,8 +279,9 @@ document.addEventListener('DOMContentLoaded',hide);window.addEventListener('load
       <form id="purchase-form" novalidate>
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label">Customer *</label>
-            <select id="pu-customer" class="form-select" required><option value="">Select customer…</option></select>
+            <label class="form-label">Customer <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+            <input id="pu-customer" class="form-input" list="pu-customers-list" placeholder="Type a name, pick one, or leave blank" autocomplete="off">
+            <datalist id="pu-customers-list"></datalist>
           </div>
           <div class="form-group">
             <label class="form-label">Quantity *</label>
