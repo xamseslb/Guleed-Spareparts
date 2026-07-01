@@ -73,3 +73,32 @@ def test_deleting_unpaid_releases_reserved_stock(client, auth_headers):
     p = client.get(f"/api/parts/{part['id']}", headers=auth_headers).json()
     assert p["available_quantity"] == 10      # reservation released
     assert p["stock_quantity"] == 10
+
+
+def test_delete_unpaid_loan_releases_reservation(client, auth_headers):
+    part = _part(client, auth_headers, part_number="LN-DEL1")
+    cust = _customer(client, auth_headers)
+    loan = _loan(client, auth_headers, part["id"], cust["id"], 3).json()
+    # While unpaid: reserved (loaned 3), stock still 10, available 7
+    p = client.get(f"/api/parts/{part['id']}", headers=auth_headers).json()
+    assert p["loaned_quantity"] == 3 and p["available_quantity"] == 7
+
+    assert client.delete(f"/api/loans/{loan['id']}", headers=auth_headers).status_code == 204
+    p = client.get(f"/api/parts/{part['id']}", headers=auth_headers).json()
+    assert p["loaned_quantity"] == 0          # reservation released
+    assert p["stock_quantity"] == 10
+    assert p["available_quantity"] == 10       # back to normal
+
+
+def test_delete_paid_loan_restores_stock(client, auth_headers):
+    part = _part(client, auth_headers, part_number="LN-DEL2")
+    cust = _customer(client, auth_headers)
+    loan = _loan(client, auth_headers, part["id"], cust["id"], 3).json()
+    # Mark paid → sold → stock 7, loaned 0
+    client.post(f"/api/loans/{loan['id']}/return", headers=auth_headers)
+    p = client.get(f"/api/parts/{part['id']}", headers=auth_headers).json()
+    assert p["stock_quantity"] == 7 and p["loaned_quantity"] == 0
+
+    assert client.delete(f"/api/loans/{loan['id']}", headers=auth_headers).status_code == 204
+    p = client.get(f"/api/parts/{part['id']}", headers=auth_headers).json()
+    assert p["stock_quantity"] == 10           # sale undone, items back in stock

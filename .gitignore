@@ -12,3 +12,6 @@ env/
 
 # Windows folder metadata
 desktop.ini
+
+# Test database artifact
+test_guleed.db

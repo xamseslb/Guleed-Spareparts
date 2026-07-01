@@ -204,10 +204,13 @@ def delete_loan(
     part = db.query(Part).filter(Part.id == loan.part_id).first()
     request.scope["audit_detail"] = f"credit sale #{loan.id} ({part.part_number if part else 'part #' + str(loan.part_id)} ×{loan.quantity})"
 
-    # If still unpaid (not yet a finalized sale), release the reserved quantity back
-    if loan.status in ("unpaid", "overdue"):
-        part = db.query(Part).filter(Part.id == loan.part_id).first()
-        if part:
+    # Deleting a loan undoes its effect on inventory, so stock returns to normal:
+    if part:
+        if loan.status == "paid":
+            # It had been sold (stock was decremented) – put the items back.
+            part.stock_quantity += loan.quantity
+        elif loan.status in ("unpaid", "overdue"):
+            # Still just reserved (not sold) – release the reservation.
             part.loaned_quantity = max(0, part.loaned_quantity - loan.quantity)
 
     db.delete(loan)
