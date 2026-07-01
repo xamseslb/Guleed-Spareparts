@@ -478,10 +478,12 @@ function renderTable(loans) {
   const partCell = l => `<div class="cell-name">${l.part_name || '–'}</div><div class="cell-desc">${l.part_number || ''}</div>`;
   const PRICE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>';
   const CANCEL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>';
+  const PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
   const actions = l => {
     const active = l.status === 'unpaid' || l.status === 'overdue';
     return `<div class="cell-actions">${active
-      ? `<button class="btn-icon" onclick="editLoanPrice(${l.id}, ${l.loan_price || 0})" title="Edit price">${PRICE}</button>
+      ? `<button class="btn-icon" onclick="addPartsToLoan(${l.id})" title="Add more parts to this sale">${PLUS}</button>
+         <button class="btn-icon" onclick="editLoanPrice(${l.id}, ${l.loan_price || 0})" title="Edit price">${PRICE}</button>
          <button class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="returnLoan(${l.id})" title="Mark as paid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg> Mark paid</button>
          <button class="btn-icon" onclick="cancelLoan(${l.id})" title="Cancel — release the reservation">${CANCEL}</button>` : ''}
       <button class="btn-icon danger" onclick="deleteLoan(${l.id})" title="Delete record">${TRASH}</button></div>`;
@@ -529,7 +531,8 @@ function renderTable(loans) {
         <td class="date-cell" data-label="Payment by">${payByCell(f)}</td>
         <td data-label="Status">${statusBadge(gStatus)}</td>
         <td class="card-actions" onclick="event.stopPropagation()"><div class="cell-actions">
-          ${anyUnpaid ? `<button class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="payGroup('${key}')">Mark paid</button>` : ''}
+          ${anyUnpaid ? `<button class="btn-icon" onclick="addPartsToLoan(${f.id})" title="Add more parts to this sale">${PLUS}</button>
+          <button class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="payGroup('${key}')">Mark paid</button>` : ''}
           <button class="btn-icon danger" onclick="deleteGroup('${key}')" title="Delete whole sale">${TRASH}</button>
         </div></td></tr>`;
       items.forEach(l => {
@@ -588,13 +591,50 @@ document.getElementById('price-modal-save').addEventListener('click', async () =
 
 // ── Modal ─────────────────────────────────────────────────────────────
 const modal = document.getElementById('loan-modal');
+let addToGroupRef = null;      // when set, new parts join this existing receipt
+let addToAnchorLoanId = null;  // a single loan that needs its group_ref set on save
+const toLocalInput = iso => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 16);
+};
 function openModal() { modal.classList.add('open'); }
 function closeModal() {
   modal.classList.remove('open');
   document.getElementById('loan-form').reset();
   document.getElementById('loan-id').value = '';
   document.getElementById('modal-title').textContent = 'Register Loan';
+  document.getElementById('modal-save').textContent = 'Save loan';
+  document.getElementById('f-customer').disabled = false;
+  document.getElementById('f-employee').disabled = false;
+  addToGroupRef = null;
+  addToAnchorLoanId = null;
 }
+
+// Add more parts to an existing open credit sale (same customer/receipt).
+window.addPartsToLoan = async (loanId) => {
+  const loan = allLoans.find(l => l.id === loanId);
+  if (!loan) return;
+  if (loan.status === 'paid' || loan.status === 'cancelled') {
+    toast('Only open (unpaid) sales can be extended', 'error'); return;
+  }
+  // Reuse the receipt id, or mint one and remember to anchor this loan to it on save.
+  if (loan.group_ref) { addToGroupRef = loan.group_ref; addToAnchorLoanId = null; }
+  else { addToGroupRef = 'G' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); addToAnchorLoanId = loan.id; }
+
+  document.getElementById('f-customer').value = loan.customer_id;
+  document.getElementById('f-employee').value = loan.employee_name;
+  document.getElementById('f-loan-date').value = toLocalInput(loan.loan_date);
+  document.getElementById('f-return-date').value = toLocalInput(loan.expected_return_date);
+  document.getElementById('f-notes').value = '';
+  document.getElementById('f-customer').disabled = true;   // keep the same customer/employee
+  document.getElementById('f-employee').disabled = true;
+  document.getElementById('modal-title').textContent = 'Add parts to sale';
+  document.getElementById('modal-save').textContent = 'Add parts';
+  resetLines([]);
+  openModal();
+};
 
 document.getElementById('add-loan-btn').addEventListener('click', () => {
   const now = new Date();
@@ -632,10 +672,13 @@ document.getElementById('modal-save').addEventListener('click', async () => {
 
   const loan_date = loanDateVal ? new Date(loanDateVal).toISOString() : null;
   const expected_return_date = retDateVal ? new Date(retDateVal).toISOString() : null;
-  // One shared receipt id so the parts show as a single sale
-  const group_ref = 'G' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  // Reuse the receipt id when extending an existing sale, else mint a new one.
+  const adding = !!addToGroupRef;
+  const group_ref = addToGroupRef || ('G' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
 
   try {
+    // When extending a previously-single loan, tag it into the shared receipt first.
+    if (addToAnchorLoanId) await api.updateLoan(addToAnchorLoanId, { group_ref });
     for (const l of lines) {
       await api.createLoan({
         customer_id, part_id: l.part_id, quantity: l.quantity,
@@ -643,7 +686,8 @@ document.getElementById('modal-save').addEventListener('click', async () => {
         loan_date, expected_return_date, notes, group_ref,
       });
     }
-    toast(lines.length === 1 ? 'Credit sale registered' : `Sale of ${lines.length} parts registered`, 'success');
+    toast(adding ? `${lines.length} part${lines.length === 1 ? '' : 's'} added to the sale`
+                 : (lines.length === 1 ? 'Credit sale registered' : `Sale of ${lines.length} parts registered`), 'success');
     closeModal();
     loadLoans();
   } catch (err) {

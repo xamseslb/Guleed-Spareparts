@@ -132,3 +132,24 @@ def test_cannot_pay_a_cancelled_loan(client, auth_headers):
     client.post(f"/api/loans/{loan['id']}/cancel", headers=auth_headers)
     r = client.post(f"/api/loans/{loan['id']}/return", headers=auth_headers)
     assert r.status_code == 400
+
+
+def test_can_link_a_loan_into_a_receipt(client, auth_headers):
+    # Backend support for "add parts to an existing sale": a single loan can be
+    # tagged with a group_ref so later loans join the same receipt.
+    part = _part(client, auth_headers, part_number="LN-GRP1")
+    cust = _customer(client, auth_headers)
+    loan = _loan(client, auth_headers, part["id"], cust["id"], 1).json()
+    assert loan["group_ref"] in (None, "")
+
+    r = client.put(f"/api/loans/{loan['id']}", json={"group_ref": "G-recpt1"}, headers=auth_headers)
+    assert r.status_code == 200, r.text
+    assert r.json()["group_ref"] == "G-recpt1"
+
+    # A second loan created with the same group_ref shares the receipt
+    r2 = client.post("/api/loans/", json={
+        "customer_id": cust["id"], "part_id": part["id"], "quantity": 1,
+        "loan_price": 100, "employee_name": "Hamse", "group_ref": "G-recpt1",
+    }, headers=auth_headers)
+    assert r2.status_code == 201
+    assert r2.json()["group_ref"] == "G-recpt1"

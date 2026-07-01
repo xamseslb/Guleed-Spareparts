@@ -31,6 +31,7 @@ class LoanUpdate(BaseModel):
     returned_date: Optional[datetime] = None          # set this to mark as returned
     status: Optional[str] = None                      # 'active' | 'returned' | 'overdue'
     notes: Optional[str] = None
+    group_ref: Optional[str] = None                   # link a single loan into a shared receipt
 
 
 class LoanOut(BaseModel):
