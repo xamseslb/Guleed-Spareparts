@@ -266,6 +266,7 @@ document.addEventListener('DOMContentLoaded',hide);window.addEventListener('load
 
 <script type="module">
 import { api } from './js/api.js';
+import { attachCombobox } from './js/combobox.js';
 
 // ── Auth ────────────────────────────────────────────────────────────
 const token = localStorage.getItem('gs_token');
@@ -304,6 +305,7 @@ function fmtDate(dt) {
 let partsData = [];
 let partLabelToId = {};   // "81551-90k09 – Name (9 available)" -> id
 let partIdToLabel = {};   // id -> label (for pre-filling an existing line)
+let partLabels = [];      // for the searchable part dropdown
 
 // ── Cart lines: sell several parts in one credit sale ─────────────────
 function unitPrice(partId) {
@@ -338,8 +340,10 @@ function addLine(partId = '', qty = 1) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>`;
   wrap.appendChild(row);
-  if (partId) row.querySelector('.line-part').value = partIdToLabel[partId] || '';
-  row.querySelector('.line-part').addEventListener('input', updateTotal);
+  const partInput = row.querySelector('.line-part');
+  if (partId) partInput.value = partIdToLabel[partId] || '';
+  attachCombobox(partInput, () => partLabels);
+  partInput.addEventListener('input', updateTotal);
   row.querySelector('.line-qty').addEventListener('input', updateTotal);
   row.querySelector('.line-remove').addEventListener('click', () => {
     if (wrap.querySelectorAll('.order-line').length > 1) { row.remove(); updateTotal(); }
@@ -368,15 +372,14 @@ async function loadDropdowns() {
     });
 
     partsData = parts || [];
-    partLabelToId = {}; partIdToLabel = {};
-    const dl = document.getElementById('parts-datalist');
-    dl.innerHTML = partsData.map(p => {
+    partLabelToId = {}; partIdToLabel = {}; partLabels = [];
+    partsData.forEach(p => {
       const avail = p.stock_quantity - p.loaned_quantity;
       const label = `${p.part_number} – ${p.name} (${avail} available)`;
       partLabelToId[label] = p.id;
       partIdToLabel[p.id] = label;
-      return `<option value="${label.replace(/"/g, '&quot;')}"></option>`;
-    }).join('');
+      partLabels.push(label);
+    });
 
     const empSel = document.getElementById('f-employee');
     employees.forEach(e => {

@@ -4,7 +4,7 @@
    cache in the background so the next load is up to date. API data is cached
    separately by api.js in localStorage; we deliberately don't cache /api/. */
 
-const CACHE = 'guleed-v8';
+const CACHE = 'guleed-v9';
 const SHELL = [
   './login.html',
   './index.html',
@@ -18,6 +18,7 @@ const SHELL = [
   './css/style.css',
   './js/api.js',
   './js/app.js',
+  './js/combobox.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',

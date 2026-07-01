@@ -3,6 +3,7 @@
  */
 
 import { api } from './api.js';
+import { attachCombobox } from './combobox.js';
 
 const API_BASE = 'http://localhost:8000';
 
@@ -555,6 +556,7 @@ window.openPartAction = async (partId) => {
 // ── Populate customer + employee dropdowns ──────────────────────────
 let dropdownsLoaded = false;
 let puCustomersByName = {};   // lowercase name → id, to resolve a typed purchase customer
+let puCustomerLabels = [];    // names for the searchable purchase-customer dropdown
 async function loadActionDropdowns() {
   if (dropdownsLoaded) return;
   try {
@@ -565,16 +567,14 @@ async function loadActionDropdowns() {
 
     // Purchase customer is optional + typeable (datalist); loan stays a required select.
     const loCust = document.getElementById('lo-customer');
-    const puList = document.getElementById('pu-customers-list');
     loCust.innerHTML = '<option value="">Select customer…</option>';
     puCustomersByName = {};
-    let puOptions = '';
+    puCustomerLabels = (customers || []).map(c => c.name);
     customers.forEach(c => {
       loCust.insertAdjacentHTML('beforeend', `<option value="${c.id}">${c.name}${c.phone ? ' – ' + c.phone : ''}</option>`);
       puCustomersByName[c.name.trim().toLowerCase()] = c.id;
-      puOptions += `<option value="${c.name.replace(/"/g, '&quot;')}">${c.phone || ''}</option>`;
     });
-    if (puList) puList.innerHTML = puOptions;
+    attachCombobox(document.getElementById('pu-customer'), () => puCustomerLabels);
 
     // Employee dropdown (loans only)
     const loEmp = document.getElementById('lo-employee');

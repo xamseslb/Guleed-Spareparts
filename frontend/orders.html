@@ -227,6 +227,7 @@ document.addEventListener('DOMContentLoaded',hide);window.addEventListener('load
 
 <script type="module">
 import { api } from './js/api.js';
+import { attachCombobox } from './js/combobox.js';
 
 const token = localStorage.getItem('gs_token');
 if (!token) window.location.href = 'login.html';
@@ -262,28 +263,28 @@ let partsData = [];
 let partLabelToId = {};   // "81551-90k09 – Name" -> id
 let partIdToLabel = {};   // id -> label
 let customersByName = {};   // lowercase name → id, to resolve a typed customer
+let partLabels = [];        // for the searchable part dropdown
+let customerLabels = [];    // for the searchable customer dropdown
 
 async function loadDropdowns() {
   try {
     const [customers, parts] = await Promise.all([api.getCustomers(), api.getParts()]);
     customersByName = {};
+    customerLabels = (customers || []).map(c => c.name);
     (customers || []).forEach(c => { customersByName[c.name.trim().toLowerCase()] = c.id; });
-    const dl = document.getElementById('customers-list');
-    if (dl) dl.innerHTML = (customers || [])
-      .map(c => `<option value="${c.name}">${c.phone || ''}</option>`).join('');
     partsData = parts || [];
-    partLabelToId = {}; partIdToLabel = {};
-    const pdl = document.getElementById('parts-datalist');
-    pdl.innerHTML = partsData.map(p => {
+    partLabelToId = {}; partIdToLabel = {}; partLabels = [];
+    partsData.forEach(p => {
       const label = `${p.part_number} – ${p.name}`;
       partLabelToId[label] = p.id;
       partIdToLabel[p.id] = label;
-      return `<option value="${label.replace(/"/g, '&quot;')}"></option>`;
-    }).join('');
+      partLabels.push(label);
+    });
   } catch (err) {
     toast('Failed to load customers/parts: ' + err.message, 'error');
   }
 }
+attachCombobox(document.getElementById('f-customer'), () => customerLabels);
 
 // ── Cart lines: buy several parts in one purchase ─────────────────────
 function unitPrice(partId) {
@@ -318,8 +319,10 @@ function addLine(partId = '', qty = 1) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>`;
   wrap.appendChild(row);
-  if (partId) row.querySelector('.line-part').value = partIdToLabel[partId] || '';
-  row.querySelector('.line-part').addEventListener('input', updateTotal);
+  const partInput = row.querySelector('.line-part');
+  if (partId) partInput.value = partIdToLabel[partId] || '';
+  attachCombobox(partInput, () => partLabels);
+  partInput.addEventListener('input', updateTotal);
   row.querySelector('.line-qty').addEventListener('input', updateTotal);
   row.querySelector('.line-remove').addEventListener('click', () => {
     if (wrap.querySelectorAll('.order-line').length > 1) { row.remove(); updateTotal(); }
