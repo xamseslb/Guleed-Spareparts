@@ -169,6 +169,8 @@ def return_loan(
         raise HTTPException(status_code=404, detail="Loan not found")
     if loan.status == "paid":
         raise HTTPException(status_code=400, detail="This credit sale is already marked as paid")
+    if loan.status == "cancelled":
+        raise HTTPException(status_code=400, detail="This credit sale was cancelled")
 
     # Mark as paid. The part is sold – clear the outstanding amount AND remove it
     # from stock. It is NOT returned to inventory.
@@ -179,6 +181,34 @@ def return_loan(
     if part:
         part.loaned_quantity = max(0, part.loaned_quantity - loan.quantity)
         part.stock_quantity = max(0, part.stock_quantity - loan.quantity)
+
+    db.commit()
+    db.refresh(loan)
+    return enrich(loan)
+
+
+# POST /api/loans/{id}/cancel – cancel an unpaid credit sale (any user)
+@router.post("/{loan_id}/cancel", response_model=LoanOut)
+def cancel_loan(
+    loan_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    loan = db.query(Loan).filter(Loan.id == loan_id).first()
+    if not loan:
+        raise HTTPException(status_code=404, detail="Loan not found")
+    if loan.status == "paid":
+        raise HTTPException(status_code=400, detail="This credit sale is already paid — delete it instead to reverse it")
+    if loan.status == "cancelled":
+        raise HTTPException(status_code=400, detail="This credit sale is already cancelled")
+
+    # The item was only reserved (never sold), so release it back to available stock.
+    part = db.query(Part).filter(Part.id == loan.part_id).first()
+    if part:
+        part.loaned_quantity = max(0, part.loaned_quantity - loan.quantity)
+    loan.status = "cancelled"
+    request.scope["audit_detail"] = f"cancelled credit sale #{loan.id} ({part.part_number if part else 'part #' + str(loan.part_id)} ×{loan.quantity})"
 
     db.commit()
     db.refresh(loan)

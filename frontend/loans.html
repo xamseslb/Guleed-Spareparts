@@ -292,7 +292,7 @@ function toast(msg, type = 'info') {
 
 // ── Status badge ──────────────────────────────────────────────────────
 function statusBadge(s) {
-  const map = { unpaid: 'low', overdue: 'empty', paid: 'ok' };
+  const map = { unpaid: 'low', overdue: 'empty', paid: 'ok', cancelled: 'category' };
   return `<span class="badge badge-${map[s] || 'ok'}">${s.charAt(0).toUpperCase() + s.slice(1)}</span>`;
 }
 
@@ -402,7 +402,7 @@ async function loadLoans() {
     const overdue  = allLoans.filter(l => l.status === 'overdue').length;
     const returned = allLoans.filter(l => l.status === 'paid').length;
     const totalVal = allLoans
-      .filter(l => l.status !== 'paid')
+      .filter(l => l.status === 'unpaid' || l.status === 'overdue')
       .reduce((s, l) => s + (l.total_price || 0), 0);
 
     document.getElementById('stat-active').textContent = active;
@@ -477,10 +477,15 @@ function renderTable(loans) {
     ? `<span class="${l.status === 'overdue' ? 'overdue-flag' : ''}">${fmtDate(l.expected_return_date)}${l.status === 'overdue' ? ' ⚠ Overdue' : ''}</span>` : '–';
   const partCell = l => `<div class="cell-name">${l.part_name || '–'}</div><div class="cell-desc">${l.part_number || ''}</div>`;
   const PRICE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>';
-  const actions = l => `<div class="cell-actions">${l.status !== 'paid'
+  const CANCEL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>';
+  const actions = l => {
+    const active = l.status === 'unpaid' || l.status === 'overdue';
+    return `<div class="cell-actions">${active
       ? `<button class="btn-icon" onclick="editLoanPrice(${l.id}, ${l.loan_price || 0})" title="Edit price">${PRICE}</button>
-         <button class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="returnLoan(${l.id})" title="Mark as paid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg> Mark paid</button>` : ''}
+         <button class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="returnLoan(${l.id})" title="Mark as paid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg> Mark paid</button>
+         <button class="btn-icon" onclick="cancelLoan(${l.id})" title="Cancel — release the reservation">${CANCEL}</button>` : ''}
       <button class="btn-icon danger" onclick="deleteLoan(${l.id})" title="Delete record">${TRASH}</button></div>`;
+  };
 
   // Group rows that belong to the same sale (shared group_ref)
   const groups = {}, order = [];
@@ -510,7 +515,7 @@ function renderTable(loans) {
       const f = items[0];
       const total = items.reduce((s, x) => s + (x.total_price || 0), 0);
       const qty = items.reduce((s, x) => s + (x.quantity || 0), 0);
-      const anyUnpaid = items.some(x => x.status !== 'paid');
+      const anyUnpaid = items.some(x => x.status === 'unpaid' || x.status === 'overdue');
       const gStatus = anyUnpaid ? (items.some(x => x.status === 'overdue') ? 'overdue' : 'unpaid') : 'paid';
       html += `<tr style="cursor:pointer;" onclick="toggleGroup('${key}')">
         <td class="cell-part-number" data-label="Sale"><span id="chev-${key}">▸</span> <span style="font-weight:400;color:var(--text-muted);font-size:10px;">🧾 ${key.slice(0, 7)}</span></td>
@@ -549,7 +554,7 @@ window.toggleGroup = (key) => {
   if (chev) chev.textContent = chev.textContent.trim() === '▸' ? '▾' : '▸';
 };
 window.payGroup = async (key) => {
-  const items = allLoans.filter(l => l.group_ref === key && l.status !== 'paid');
+  const items = allLoans.filter(l => l.group_ref === key && (l.status === 'unpaid' || l.status === 'overdue'));
   if (!items.length) return;
   if (!confirm(`Mark all ${items.length} parts in this sale as paid? They stay sold (stock is not restored).`)) return;
   try { for (const l of items) await api.returnLoan(l.id); toast('Sale marked as paid', 'success'); loadLoans(); }
@@ -652,6 +657,18 @@ window.returnLoan = async (id) => {
   try {
     await api.returnLoan(id);
     toast('Marked as paid', 'success');
+    loadLoans();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+};
+
+// ── Cancel loan (release the reservation, keep the record) ────────────
+window.cancelLoan = async (id) => {
+  if (!confirm('Cancel this credit sale? The reserved stock is released and the sale is marked as cancelled (it is kept in the history).')) return;
+  try {
+    await api.cancelLoan(id);
+    toast('Credit sale cancelled', 'success');
     loadLoans();
   } catch (err) {
     toast(err.message, 'error');

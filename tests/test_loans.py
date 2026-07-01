@@ -102,3 +102,33 @@ def test_delete_paid_loan_restores_stock(client, auth_headers):
     assert client.delete(f"/api/loans/{loan['id']}", headers=auth_headers).status_code == 204
     p = client.get(f"/api/parts/{part['id']}", headers=auth_headers).json()
     assert p["stock_quantity"] == 10           # sale undone, items back in stock
+
+
+def test_cancel_unpaid_loan_releases_reservation(client, auth_headers):
+    part = _part(client, auth_headers, part_number="LN-CAN1")
+    cust = _customer(client, auth_headers)
+    loan = _loan(client, auth_headers, part["id"], cust["id"], 3).json()
+    r = client.post(f"/api/loans/{loan['id']}/cancel", headers=auth_headers)
+    assert r.status_code == 200, r.text
+    assert r.json()["status"] == "cancelled"
+    p = client.get(f"/api/parts/{part['id']}", headers=auth_headers).json()
+    assert p["loaned_quantity"] == 0        # reservation released
+    assert p["stock_quantity"] == 10        # never sold, stock untouched
+
+
+def test_cannot_cancel_a_paid_loan(client, auth_headers):
+    part = _part(client, auth_headers, part_number="LN-CAN2")
+    cust = _customer(client, auth_headers)
+    loan = _loan(client, auth_headers, part["id"], cust["id"], 2).json()
+    client.post(f"/api/loans/{loan['id']}/return", headers=auth_headers)   # pay it
+    r = client.post(f"/api/loans/{loan['id']}/cancel", headers=auth_headers)
+    assert r.status_code == 400
+
+
+def test_cannot_pay_a_cancelled_loan(client, auth_headers):
+    part = _part(client, auth_headers, part_number="LN-CAN3")
+    cust = _customer(client, auth_headers)
+    loan = _loan(client, auth_headers, part["id"], cust["id"], 2).json()
+    client.post(f"/api/loans/{loan['id']}/cancel", headers=auth_headers)
+    r = client.post(f"/api/loans/{loan['id']}/return", headers=auth_headers)
+    assert r.status_code == 400

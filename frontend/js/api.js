@@ -323,6 +323,11 @@ export const api = {
     return request('POST', `/api/loans/${id}/return`);
   },
 
+  // Cancel an unpaid credit sale – releases the reservation, keeps the record
+  async cancelLoan(id) {
+    return request('POST', `/api/loans/${id}/cancel`);
+  },
+
   async deleteLoan(id) {
     return request('DELETE', `/api/loans/${id}`);
   },
