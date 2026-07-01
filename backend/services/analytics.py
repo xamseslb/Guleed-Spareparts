@@ -112,48 +112,42 @@ def get_order_trend(db: Session, days: int = 30) -> Dict[str, Any]:
     r_squared: how well the line fits the data (0 = no fit, 1 = perfect fit)
     p_value:   how statistically confident we are (< 0.05 = significant trend)
     """
-    orders = db.query(Order).all()
-    if not orders:
+    # Count units actually SOLD each day: delivered orders (by order date) plus
+    # paid credit sales (by payment date). This mirrors the Sales screen, so
+    # credit sales show up here too – not just plain orders.
+    rows = []
+    for o in db.query(Order).filter(Order.status == OrderStatus.LEVERT).all():
+        d = _naive(o.order_date)
+        if d:
+            rows.append((d, o.quantity or 0))
+    for l in db.query(Loan).filter(Loan.status == "paid").all():
+        d = _naive(l.returned_date) or _naive(l.loan_date)
+        if d:
+            rows.append((d, l.quantity or 0))
+
+    if not rows:
         return {"trend": "no data", "daily_counts": []}
 
-    # Convert orders to a Pandas DataFrame
-    df = pd.DataFrame([{
-        "order_date": o.order_date,
-        "quantity": o.quantity,
-    } for o in orders])
+    df = pd.DataFrame(rows, columns=["date", "quantity"])
+    df["date"] = pd.to_datetime(df["date"]).dt.normalize()
+    daily = df.groupby("date")["quantity"].sum().reset_index().sort_values("date")
+    counts = [{"date": str(r["date"].date()), "quantity": int(r["quantity"])} for _, r in daily.iterrows()]
 
-    # Normalize to day-level (remove time info) and sum quantities per day
-    df["order_date"] = pd.to_datetime(df["order_date"]).dt.normalize()
-    daily = df.groupby("order_date")["quantity"].sum().reset_index()
-    daily = daily.sort_values("order_date")
-
+    # A trend line needs at least two different days.
     if len(daily) < 2:
-        return {"trend": "not enough data", "daily_counts": daily.to_dict(orient="records")}
+        return {"trend": "not enough data", "daily_counts": counts}
 
-    # x = day numbers (0, 1, 2, 3...), y = quantities sold on those days
     x = np.arange(len(daily))
     y = daily["quantity"].values.astype(float)
-
-    # Run linear regression (SciPy) to find the trend line
     slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
-
-    # Interpret the slope
-    if slope > 0.1:
-        trend_label = "Increasing"
-    elif slope < -0.1:
-        trend_label = "Decreasing"
-    else:
-        trend_label = "Stable"
+    trend_label = "Increasing" if slope > 0.1 else "Decreasing" if slope < -0.1 else "Stable"
 
     return {
         "trend": trend_label,
-        "slope": round(slope, 4),               # how steep the trend line is
-        "r_squared": round(r_value ** 2, 4),    # how reliable this trend is (0-1)
-        "p_value": round(p_value, 4),           # statistical significance
-        "daily_counts": [
-            {"date": str(row["order_date"].date()), "quantity": int(row["quantity"])}
-            for _, row in daily.iterrows()
-        ],
+        "slope": round(slope, 4),
+        "r_squared": round(r_value ** 2, 4),
+        "p_value": round(p_value, 4),
+        "daily_counts": counts,
     }
 
 

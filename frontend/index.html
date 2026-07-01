@@ -133,8 +133,8 @@ document.addEventListener('DOMContentLoaded',hide);window.addEventListener('load
         <div class="chart-card span2">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;">
             <div>
-              <div class="chart-title">Order Trend</div>
-              <div class="chart-sub">Daily order volume over time</div>
+              <div class="chart-title">Sales Trend</div>
+              <div class="chart-sub">Units sold per day · orders + credit sales</div>
             </div>
             <div id="trend-badge"></div>
           </div>
@@ -228,13 +228,14 @@ async function loadAll() {
       data: {
         labels: daily.map(d => d.date),
         datasets: [{
-          label: 'Orders',
+          label: 'Sold',
           data: daily.map(d => d.quantity),
           borderColor: BLUE,
           backgroundColor: 'rgba(29,95,208,.08)',
           fill: true,
           tension: 0.4,
-          pointRadius: 3,
+          pointRadius: 5,
+          pointHoverRadius: 7,
           pointBackgroundColor: BLUE,
         }]
       },
