@@ -650,7 +650,7 @@ document.getElementById('add-loan-btn').addEventListener('click', () => {
 document.getElementById('add-line-btn').addEventListener('click', () => addLine());
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal-cancel').addEventListener('click', closeModal);
-modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+// Clicking outside must NOT close this form – it holds typed data. Use X or Cancel.
 
 // ── Save loan ─────────────────────────────────────────────────────────
 document.getElementById('modal-save').addEventListener('click', async () => {

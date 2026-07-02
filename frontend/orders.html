@@ -495,7 +495,7 @@ document.getElementById('add-order-btn').addEventListener('click', () => {
 document.getElementById('add-line-btn').addEventListener('click', () => addLine());
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal-cancel').addEventListener('click', closeModal);
-modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+// Clicking outside must NOT close this form – it holds typed data. Use X or Cancel.
 
 document.getElementById('search-input').addEventListener('input', applyFilters);
 document.getElementById('status-filter').addEventListener('change', applyFilters);

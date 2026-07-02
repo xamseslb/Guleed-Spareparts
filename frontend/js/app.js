@@ -248,7 +248,7 @@ function closeModal() {
 document.getElementById('add-part-btn').addEventListener('click', openModal);
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal-cancel').addEventListener('click', closeModal);
-modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+// Clicking outside must NOT close this form – it holds typed data. Use X or Cancel.
 
 // ─── Bilkompatibilitet ───────────────────────────────────────────────
 function renderCarList() {
@@ -608,7 +608,7 @@ function closeActionModal() {
 document.getElementById('action-close').addEventListener('click', closeActionModal);
 document.getElementById('action-close-2').addEventListener('click', closeActionModal);
 document.getElementById('action-close-3').addEventListener('click', closeActionModal);
-actionModal.addEventListener('click', e => { if (e.target === actionModal) closeActionModal(); });
+// Clicking outside must NOT close this form – it holds typed data. Use X or Cancel.
 
 // ── Back buttons ─────────────────────────────────────────────────────
 document.getElementById('back-from-purchase').addEventListener('click', () => showStep('choose'));
